@@ -18,10 +18,12 @@ import {
   Paperclip,
   FileText
 } from "lucide-react";
-import { searchArticles, summarize } from "@/lib/api";
+import { searchArticles, summarize, addNote } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Cookies from "js-cookie";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Article = {
   title: string;
@@ -58,7 +60,14 @@ function ResearchCanvas() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
+  const [greeting, setGreeting] = useState("Selamat Datang");
+    useEffect(() => {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 12) setGreeting("Selamat Pagi");
+      else if (hour >= 12 && hour < 15) setGreeting("Selamat Siang");
+      else if (hour >= 15 && hour < 18) setGreeting("Selamat Sore");
+      else setGreeting("Selamat Malam");
+    }, []);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [summaryData, setSummaryData] = useState<{
     url: string;
@@ -66,6 +75,7 @@ function ResearchCanvas() {
   } | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -101,26 +111,6 @@ function ResearchCanvas() {
         setSearchData(cachedItem.searchData);
         if (cachedItem.summaryData) {
           setSummaryData(cachedItem.summaryData);
-        } else if (cachedItem.searchData.articles?.[0]?.url) {
-          // Trigger summary if missing
-          setIsSummarizing(true);
-          summarize({ url: cachedItem.searchData.articles[0].url })
-            .then((sumData) => {
-              setSummaryData(sumData);
-              // Update cache
-              cachedItem.summaryData = sumData;
-              localStorage.setItem(
-                "search_history",
-                JSON.stringify(savedHistory),
-              );
-            })
-            .catch((sumErr) => {
-              setSummaryData({
-                url: cachedItem.searchData.articles[0].url,
-                summary: `⚠️ Tidak dapat membuat ringkasan: ${sumErr.message || "Terjadi kesalahan."}`,
-              });
-            })
-            .finally(() => setIsSummarizing(false));
         }
       } else {
         handleSearch(undefined, q);
@@ -180,36 +170,7 @@ function ResearchCanvas() {
         }
         localStorage.setItem("search_history", JSON.stringify(updatedHistory));
 
-        // If summary data wasn't pre-cached
-        if (!(newHistoryItem as any).summaryData) {
-          setIsSummarizing(true);
-          try {
-            const sumData = await summarize({ url: data.articles[0].url });
-            setSummaryData(sumData);
-
-            // Append summaryData cache
-            const latestHistory = JSON.parse(
-              localStorage.getItem("search_history") || "[]",
-            );
-            const targetIdx = latestHistory.findIndex(
-              (h: any) => h.id === historyId,
-            );
-            if (targetIdx >= 0) {
-              latestHistory[targetIdx].summaryData = sumData;
-              localStorage.setItem(
-                "search_history",
-                JSON.stringify(latestHistory),
-              );
-            }
-          } catch (sumErr: any) {
-            setSummaryData({
-              url: data.articles[0].url,
-              summary: `⚠️ Tidak dapat membuat ringkasan: ${sumErr.message || "Terjadi kesalahan pada server."}`,
-            });
-          } finally {
-            setIsSummarizing(false);
-          }
-        } else {
+        if ((newHistoryItem as any).summaryData) {
           setSummaryData((newHistoryItem as any).summaryData);
         }
       }
@@ -224,6 +185,67 @@ function ResearchCanvas() {
       }
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleSummarize = async (article: Article) => {
+    setIsSummarizing(true);
+    setSummaryData(null);
+    try {
+      const sumData = await summarize({ url: article.url });
+      setSummaryData(sumData);
+
+      const currentHistory = JSON.parse(
+        localStorage.getItem("search_history") || "[]",
+      );
+      const existingIdx = currentHistory.findIndex(
+        (h: any) => h.query === query,
+      );
+      if (existingIdx >= 0) {
+        currentHistory[existingIdx].summaryData = sumData;
+        localStorage.setItem(
+          "search_history",
+          JSON.stringify(currentHistory),
+        );
+      }
+    } catch (sumErr: any) {
+      setSummaryData({
+        url: article.url,
+        summary: `⚠️ Tidak dapat membuat ringkasan: ${sumErr.message || "Terjadi kesalahan pada server."}`,
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleCopySummary = () => {
+    if (summaryData?.summary) {
+      navigator.clipboard.writeText(summaryData.summary);
+      alert("Ringkasan berhasil disalin!");
+    } else {
+      alert("Tidak ada ringkasan untuk disalin.");
+    }
+  };
+
+  const handleSaveToNotes = async () => {
+    if (!summaryData?.summary) {
+      alert("Tidak ada ringkasan untuk disimpan.");
+      return;
+    }
+    
+    setIsSavingNote(true);
+    try {
+      const res = await addNote(`Ringkasan: ${query}`, summaryData.summary);
+      if (!res?.error) {
+        alert("Ringkasan berhasil disimpan ke catatan!");
+      } else {
+        alert("Gagal menyimpan ke catatan.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat menyimpan catatan.");
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -253,7 +275,7 @@ function ResearchCanvas() {
                 <Sparkles className="w-10 h-10 text-[#0f766e]" />
               </div>
               <h1 className="text-3xl md:text-4xl text-slate-800 mb-4 font-bold tracking-tight">
-                P P apa ??
+                {greeting} User
               </h1>
               <p className="text-base md:text-lg text-slate-500 mb-10 max-w-2xl leading-relaxed">
                 Masukan kata kunci pembelajaran yang ingin dirangkum dan AI akan membuatkannya untuk mu
@@ -332,7 +354,8 @@ function ResearchCanvas() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.1 }}
                       key={idx}
-                      className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all"
+                      onClick={() => handleSummarize(article)}
+                      className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer hover:border-[#0f766e]/30"
                     >
                       <div className="flex gap-2 mb-3">
                         <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs font-medium rounded-md flex items-center gap-1">
@@ -357,7 +380,8 @@ function ResearchCanvas() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               const current = JSON.parse(
                                 localStorage.getItem("saved_articles") || "[]",
                               );
@@ -392,6 +416,7 @@ function ResearchCanvas() {
                               href={article.url}
                               target="_blank"
                               rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
                               className="p-1.5 text-[#0f766e] hover:text-[#0d645d] transition-colors"
                               title="Read Original"
                             >
@@ -406,8 +431,8 @@ function ResearchCanvas() {
               </div>
 
               {/* Right Column: AI Summary */}
-              <div className="col-span-1 lg:col-span-8">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 h-full min-h-[500px]">
+              <div className="col-span-1 lg:col-span-8 lg:sticky lg:top-8 h-fit">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 min-h-[500px]">
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-[#e6f2f1] rounded-full flex items-center justify-center">
@@ -423,14 +448,25 @@ function ResearchCanvas() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-2">
+                      <button 
+                        onClick={handleCopySummary}
+                        className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-2"
+                      >
                         <Copy className="w-4 h-4" />
                         <span className="hidden sm:inline text-sm font-medium">
                           Salin
                         </span>
                       </button>
-                      <button className="px-4 py-2 bg-[#0f766e] text-white hover:bg-[#0d645d] rounded-lg transition-colors flex items-center gap-2 font-medium text-sm">
-                        <BookmarkPlus className="w-4 h-4" />
+                      <button 
+                        onClick={handleSaveToNotes}
+                        disabled={isSavingNote || !summaryData?.summary}
+                        className="px-4 py-2 bg-[#0f766e] text-white hover:bg-[#0d645d] rounded-lg transition-colors flex items-center gap-2 font-medium text-sm disabled:opacity-50"
+                      >
+                        {isSavingNote ? (
+                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                           <BookmarkPlus className="w-4 h-4" />
+                        )}
                         Simpan ke Catatan
                       </button>
                     </div>
@@ -454,14 +490,15 @@ function ResearchCanvas() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        <p className="leading-relaxed whitespace-pre-wrap">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {summaryData.summary}
-                        </p>
+                        </ReactMarkdown>
                       </motion.div>
                     ) : (
-                      <p className="text-slate-400 italic">
-                        Ringkasan belum dibuat. Mencari artikel...
-                      </p>
+                      <div className="flex flex-col items-center justify-center text-center h-full text-slate-400 pt-20 pb-10">
+                        <Bot className="w-12 h-12 mb-4 opacity-30" />
+                        <p>Silakan pilih salah satu materi di sebelah kiri<br/>untuk melihat ringkasan.</p>
+                      </div>
                     )}
                   </div>
                 </div>
