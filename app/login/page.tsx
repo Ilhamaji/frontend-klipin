@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Cookies from "js-cookie";
@@ -8,7 +9,7 @@ import { login } from "@/lib/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,25 +41,32 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20">
-      
-
       <div className="w-full max-w-[400px] px-4">
         <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
           <div className="p-8">
             <div className="flex items-center justify-center gap-2 mb-4">
-          <img src="/klipin.png" alt="Klipin Logo" className="w-auto h-30 object-contain" />
-        </div>
-            <h2 className="text-xl font-semibold text-slate-800 text-center mb-6">Selamat Datang</h2>
-            
+              <img
+                src="/klipin.png"
+                alt="Klipin Logo"
+                className="w-auto h-30 object-contain"
+              />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-800 text-center mb-6">
+              Selamat Datang
+            </h2>
+
             <form onSubmit={handleLogin} className="space-y-5">
               {error && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
                   {error}
                 </div>
               )}
-              
+
+              {/* Username */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-600 ml-1">Username</label>
+                <label className="text-xs font-medium text-slate-600 ml-1">
+                  Username
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <Mail className="h-4 w-4 text-slate-400" />
@@ -73,9 +81,11 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-
+              {/* Password */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-600 ml-1">Password</label>
+                <label className="text-xs font-medium text-slate-600 ml-1">
+                  Password
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <Lock className="h-4 w-4 text-slate-400" />
@@ -101,7 +111,7 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
-              
+              {/* Btn submit */}
               <div className="pt-2">
                 <button
                   type="submit"
@@ -122,13 +132,18 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
-          </div>
-          
-          {/* <div className="bg-[#f4f7fb] py-5 border-t border-slate-100 text-center">
-            <p className="text-sm text-slate-500">
-              Don&apos;t have an account? <a href="#" className="text-[#0f766e] font-semibold hover:underline">Request Access</a>
+
+            {/* Link ke register page */}
+            <p className="text-center text-xs text-slate-500 mt-4">
+              Belum punya akun?{" "}
+              <Link
+                href="/register"
+                className="text-[#0f766e] font-medium hover:underline"
+              >
+                Register sekarang
+              </Link>
             </p>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

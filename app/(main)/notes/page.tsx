@@ -2,10 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, Save, Clock, ChevronRight, ChevronLeft, FileText } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit3,
+  Save,
+  Clock,
+  ChevronRight,
+  ChevronLeft,
+  FileText,
+} from "lucide-react";
 import { getNotes, addNote, editNote, deleteNote } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
+// Export PDF
+import { FileDown } from "lucide-react";
+import jsPDF from "jspdf";
 
 type Note = {
   id: number;
@@ -82,14 +94,16 @@ export default function NotesPage() {
         const savedNote = res.data || res;
         if (!res.error || savedNote?.id || res.message) {
           // Force local state to reflect the edited fields immediately to ensure UI responsiveness
-          const updatedNoteObj = { 
-            ...activeNote, 
-            ...(savedNote?.id ? savedNote : {}), 
-            title: editTitle, 
-            contents: editContent, 
-            updated_at: new Date().toISOString() 
+          const updatedNoteObj = {
+            ...activeNote,
+            ...(savedNote?.id ? savedNote : {}),
+            title: editTitle,
+            contents: editContent,
+            updated_at: new Date().toISOString(),
           };
-          const updatedNotes = notes.map(n => n.id === activeNote.id ? updatedNoteObj : n);
+          const updatedNotes = notes.map((n) =>
+            n.id === activeNote.id ? updatedNoteObj : n,
+          );
           setNotes(updatedNotes);
           setActiveNote(updatedNoteObj);
           setIsEditing(false);
@@ -113,7 +127,7 @@ export default function NotesPage() {
     try {
       const res = await deleteNote(id);
       if (!res.error) {
-        setNotes(notes.filter(n => n.id !== id));
+        setNotes(notes.filter((n) => n.id !== id));
         if (activeNote?.id === id) {
           setActiveNote(null);
           setIsEditing(false);
@@ -126,6 +140,25 @@ export default function NotesPage() {
     }
   };
 
+  const handleExportPDF = () => {
+    if (!activeNote) return;
+    const doc = new jsPDF();
+
+    // Judul
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(activeNote.title, 20, 20);
+
+    // Isi
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0);
+    const splitText = doc.splitTextToSize(activeNote.contents, 170);
+    doc.text(splitText, 20, 30);
+
+    doc.save(`${activeNote.title}.pdf`);
+  };
+
   const selectNote = (note: Note) => {
     setActiveNote(note);
     setEditTitle(note.title);
@@ -136,27 +169,31 @@ export default function NotesPage() {
   return (
     <div className="flex h-full bg-background overflow-hidden relative">
       {/* Left Pane: Note List */}
-      <div className={cn(
-        "w-full md:w-80 h-full border-r border-outline-variant/30 flex-col bg-surface/30 shrink-0",
-        activeNote ? "hidden md:flex" : "flex"
-      )}>
+      <div
+        className={cn(
+          "w-full md:w-80 h-full border-r border-outline-variant/30 flex-col bg-surface/30 shrink-0",
+          activeNote ? "hidden md:flex" : "flex",
+        )}
+      >
         <div className="p-6 pl-16 md:pl-6 border-b border-outline-variant/20 flex justify-between items-center">
           <h2 className="typography-headline-sm text-on-surface">Catatan</h2>
-          <button 
+          <button
             onClick={handleNewNote}
             className="p-2 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
           </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {isLoading ? (
             <div className="flex justify-center p-8">
               <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           ) : notes.length === 0 ? (
-            <p className="text-center text-outline typography-body-md p-4">Tidak ada cacatan, ayo mulai membuat!</p>
+            <p className="text-center text-outline typography-body-md p-4">
+              Tidak ada cacatan, ayo mulai membuat!
+            </p>
           ) : (
             <AnimatePresence>
               {notes.map((note) => (
@@ -170,7 +207,7 @@ export default function NotesPage() {
                     "p-4 rounded-xl cursor-pointer transition-all border",
                     activeNote?.id === note.id
                       ? "bg-surface-container-lowest border-primary/30 shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
-                      : "bg-transparent border-transparent hover:bg-surface-container"
+                      : "bg-transparent border-transparent hover:bg-surface-container",
                   )}
                 >
                   <h3 className="font-hanken font-semibold text-on-surface mb-1 truncate">
@@ -191,12 +228,14 @@ export default function NotesPage() {
       </div>
 
       {/* Right Pane: Note Editor / Viewer */}
-      <div className={cn(
-        "flex-1 h-full flex-col bg-surface-container-lowest relative",
-        activeNote ? "flex" : "hidden md:flex"
-      )}>
+      <div
+        className={cn(
+          "flex-1 h-full flex-col bg-surface-container-lowest relative",
+          activeNote ? "flex" : "hidden md:flex",
+        )}
+      >
         {activeNote ? (
-          <motion.div 
+          <motion.div
             key={activeNote.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -205,40 +244,76 @@ export default function NotesPage() {
             {/* Editor Header */}
             <div className="h-20 px-4 md:px-8 border-b border-outline-variant/20 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2 text-on-surface-variant typography-label-sm">
-                <button 
-                  className="md:hidden p-2 -ml-2 hover:bg-surface-container rounded-lg" 
-                  onClick={() => { setActiveNote(null); setIsEditing(false); }}
+                <button
+                  className="md:hidden p-2 -ml-2 hover:bg-surface-container rounded-lg"
+                  onClick={() => {
+                    setActiveNote(null);
+                    setIsEditing(false);
+                  }}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <FileText className="w-4 h-4 hidden sm:block" />
-                <span className="hidden sm:inline">Terakhir diedit {new Date(activeNote.updated_at).toLocaleDateString()}</span>
+                <span className="hidden sm:inline">
+                  Terakhir diedit{" "}
+                  {new Date(activeNote.updated_at).toLocaleDateString()}
+                </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 {isEditing ? (
-                  <button 
-                    onClick={() => setModalConfig({ isOpen: true, type: "save" })}
+                  <button
+                    onClick={() =>
+                      setModalConfig({ isOpen: true, type: "save" })
+                    }
                     disabled={isSaving}
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors text-sm font-medium shadow-sm shadow-primary/20 disabled:opacity-70"
                   >
-                    {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />} 
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
                     {isSaving ? "Saving..." : "Save"}
                   </button>
                 ) : (
-                  <button 
-                    onClick={() => setModalConfig({ isOpen: true, type: "edit" })}
-                    className="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface hover:bg-outline-variant/30 rounded-lg transition-colors text-sm font-medium"
-                  >
-                    <Edit3 className="w-4 h-4 hidden sm:block" /> Edit
-                  </button>
+                  <>
+                    <button
+                      onClick={() =>
+                        setModalConfig({ isOpen: true, type: "edit" })
+                      }
+                      className="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface hover:bg-outline-variant/30 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <Edit3 className="w-4 h-4 hidden sm:block" /> Edit
+                    </button>
+
+                    {/* Tombol Export PDF */}
+                    <button
+                      onClick={handleExportPDF}
+                      className="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface hover:bg-outline-variant/30 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <FileDown className="w-4 h-4 hidden sm:block" />
+                      <span className="hidden sm:inline">Export PDF</span>
+                    </button>
+                  </>
                 )}
-                <button 
-                  onClick={() => setModalConfig({ isOpen: true, type: "delete", targetId: activeNote.id })}
+
+                <button
+                  onClick={() =>
+                    setModalConfig({
+                      isOpen: true,
+                      type: "delete",
+                      targetId: activeNote.id,
+                    })
+                  }
                   disabled={isDeleting}
                   className="p-2 text-error hover:bg-error-container/50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {isDeleting ? <div className="w-5 h-5 border-2 border-error/30 border-t-error rounded-full animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                  {isDeleting ? (
+                    <div className="w-5 h-5 border-2 border-error/30 border-t-error rounded-full animate-spin" />
+                  ) : (
+                    <Trash2 className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -263,7 +338,9 @@ export default function NotesPage() {
                 </div>
               ) : (
                 <div className="prose prose-lg prose-slate max-w-none">
-                  <h1 className="typography-display-lg text-on-surface mb-8">{activeNote.title}</h1>
+                  <h1 className="typography-display-lg text-on-surface mb-8">
+                    {activeNote.title}
+                  </h1>
                   <p className="typography-body-lg text-on-surface-variant leading-relaxed whitespace-pre-wrap">
                     {activeNote.contents}
                   </p>
@@ -274,7 +351,9 @@ export default function NotesPage() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-outline">
             <FileText className="w-16 h-16 mb-4 opacity-20" />
-            <p className="typography-headline-sm">Pilih catatan untuk dilihat</p>
+            <p className="typography-headline-sm">
+              Pilih catatan untuk dilihat
+            </p>
             <p className="typography-body-md mt-2">atau buat yang baru</p>
           </div>
         )}
@@ -282,39 +361,42 @@ export default function NotesPage() {
 
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
-        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={() => {
-          if (modalConfig.type === "delete" && modalConfig.targetId !== undefined) {
+          if (
+            modalConfig.type === "delete" &&
+            modalConfig.targetId !== undefined
+          ) {
             handleDelete(modalConfig.targetId);
-            setModalConfig(prev => ({ ...prev, isOpen: false }));
+            setModalConfig((prev) => ({ ...prev, isOpen: false }));
           } else if (modalConfig.type === "edit") {
             setIsEditing(true);
-            setModalConfig(prev => ({ ...prev, isOpen: false }));
+            setModalConfig((prev) => ({ ...prev, isOpen: false }));
           } else if (modalConfig.type === "save") {
             handleSave();
-            setModalConfig(prev => ({ ...prev, isOpen: false }));
+            setModalConfig((prev) => ({ ...prev, isOpen: false }));
           }
         }}
         title={
           modalConfig.type === "delete"
             ? "Konfirmasi Hapus"
             : modalConfig.type === "edit"
-            ? "Konfirmasi Edit"
-            : "Konfirmasi Simpan"
+              ? "Konfirmasi Edit"
+              : "Konfirmasi Simpan"
         }
         message={
           modalConfig.type === "delete"
             ? "Apakah Anda yakin ingin menghapus catatan ini? Tindakan ini tidak dapat dibatalkan."
             : modalConfig.type === "edit"
-            ? "Apakah Anda yakin ingin mengedit catatan ini?"
-            : "Apakah Anda yakin ingin menyimpan perubahan pada catatan ini?"
+              ? "Apakah Anda yakin ingin mengedit catatan ini?"
+              : "Apakah Anda yakin ingin menyimpan perubahan pada catatan ini?"
         }
         confirmLabel={
           modalConfig.type === "delete"
             ? "Hapus"
             : modalConfig.type === "edit"
-            ? "Edit"
-            : "Simpan"
+              ? "Edit"
+              : "Simpan"
         }
         variant={modalConfig.type === "delete" ? "danger" : "info"}
         isLoading={isDeleting || isSaving}

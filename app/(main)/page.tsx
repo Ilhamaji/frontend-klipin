@@ -18,7 +18,7 @@ import {
   Paperclip,
   FileText
 } from "lucide-react";
-import { searchArticles, summarize, addNote } from "@/lib/api";
+import { searchArticles, summarize, addNote, getProfile } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Cookies from "js-cookie";
@@ -57,6 +57,7 @@ export default function Page() {
 }
 
 function ResearchCanvas() {
+  const [username, setUsername] = useState("");
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -67,6 +68,11 @@ function ResearchCanvas() {
       else if (hour >= 12 && hour < 15) setGreeting("Selamat Siang");
       else if (hour >= 15 && hour < 18) setGreeting("Selamat Sore");
       else setGreeting("Selamat Malam");
+
+      // Effect data profile
+      getProfile()
+      .then((res) => setUsername(res.data.username))
+      .catch(() => setUsername(""));
     }, []);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [summaryData, setSummaryData] = useState<{
@@ -275,10 +281,10 @@ function ResearchCanvas() {
                 <Sparkles className="w-10 h-10 text-[#0f766e]" />
               </div>
               <h1 className="text-3xl md:text-4xl text-slate-800 mb-4 font-bold tracking-tight">
-                {greeting} User
+                {greeting} {username || "User"}!
               </h1>
               <p className="text-base md:text-lg text-slate-500 mb-10 max-w-2xl leading-relaxed">
-                Masukan kata kunci pembelajaran yang ingin dirangkum dan AI akan membuatkannya untuk mu
+                Masukan kata kunci pembelajaran yang ingin dicari dan AI akan membantu mengklasifikasikan hasil berdasarkan jenjang dan mata pelajarannya.
               </p>
 
               <form onSubmit={handleSearch} className="w-full relative group">

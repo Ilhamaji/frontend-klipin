@@ -1,6 +1,9 @@
 import Cookies from "js-cookie";
 
-const BASE_URL = "http://localhost:3001/api";
+// BE Local
+// const BASE_URL = "http://localhost:3001/api";
+
+const BASE_URL = "/api";
 
 function getHeaders() {
   const token = Cookies.get("auth_token");
@@ -10,6 +13,7 @@ function getHeaders() {
   };
 }
 
+// Login
 export async function login(username: string, password: string) {
   const response = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
@@ -18,6 +22,33 @@ export async function login(username: string, password: string) {
   });
   if (!response.ok) {
     throw new Error("Failed to login");
+  }
+  return response.json();
+}
+
+// Register
+export async function register(username:string, password: string) {
+  const response = await fetch(`${BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: { "COntent-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to register");
+  }
+
+  return response.json();
+}
+
+// Get user profile
+export async function getProfile() {
+  const response = await fetch(`${BASE_URL}/auth/profile`, {
+    method: "GET",
+    headers: getHeaders()
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch data profile");
   }
   return response.json();
 }
@@ -36,6 +67,7 @@ export async function searchArticles(query: string) {
   return response.json();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function summarize(data?: any) {
   const response = await fetch(`${BASE_URL}/summarize`, {
     method: "POST",
@@ -48,6 +80,7 @@ export async function summarize(data?: any) {
     try {
       const errJson = JSON.parse(errText);
       if (errJson.message) errMsg = errJson.message;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       // Not JSON
     }
