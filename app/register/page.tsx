@@ -11,32 +11,37 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  e.preventDefault();
 
-    try {
-      const res = await register(username, password);
+  setIsLoading(true);
+  setErrors([]);
 
-      if (res.error) {
-        setError(res.message || "Register failed");
-      } else {
-        router.push("/login");
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred during register.");
-      }
-    } finally {
-      setIsLoading(false);
+  try {
+    await register(username, password);
+
+    router.push("/login");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    if (err.data) {
+      const messages = err.data.map(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (e: any) => e.message
+      );
+
+      setErrors(messages);
+    } else if (err instanceof Error) {
+      setErrors([err.message]);
+    } else {
+      setErrors(["An error occurred during register."]);
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20">
@@ -57,11 +62,15 @@ export default function RegisterPage() {
 
             {/* Form regis */}
             <form onSubmit={handleRegister} className="space-y-5">
-              {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
-                  {error}
-                </div>
-              )}
+              {errors.length > 0 && (
+              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
+                <ul className="list-disc list-inside space-y-1">
+                  {errors.map((msg, index) => (
+                    <li key={index}>{msg}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
               {/* Username */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-600 ml-1">

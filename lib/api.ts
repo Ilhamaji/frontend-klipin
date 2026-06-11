@@ -20,25 +20,38 @@ export async function login(username: string, password: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
-  if (!response.ok) {
-    throw new Error("Failed to login");
+
+  // ubah jadi json
+  const data = await response.json();
+
+  if (data.error) {
+    // Kirim pesan error backend
+    throw new Error(data.message);  
   }
-  return response.json();
+
+  return data;
 }
 
 // Register
-export async function register(username:string, password: string) {
+export async function register(
+  username: string,
+  password: string
+) {
   const response = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
-    headers: { "COntent-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error("Failed to register");
+    throw data;
   }
 
-  return response.json();
+  return data;
 }
 
 // Get user profile
