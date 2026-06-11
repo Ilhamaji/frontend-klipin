@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 // BE Local
 // const BASE_URL = "http://localhost:3001/api";
 
-const BASE_URL = "/api";
+const BASE_URL = "https://backend-skripsi.netlify.app/api";
 
 function getHeaders() {
   const token = Cookies.get("auth_token");

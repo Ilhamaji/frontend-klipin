@@ -53,7 +53,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+    <div className="h-full overflow-y-auto p-4 md:p-8 relative">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

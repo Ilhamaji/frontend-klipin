@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/Sidebar";
+import { IdleWrapper } from "@/components/IdleWrapper";
 
 export default function MainLayout({
   children,
@@ -9,7 +10,9 @@ export default function MainLayout({
     <div className="flex h-screen overflow-hidden bg-white">
       <Sidebar />
       <main className="flex-1 h-full overflow-hidden relative z-0">
-        {children}
+        <IdleWrapper>
+          {children}
+        </IdleWrapper>
       </main>
     </div>
   );

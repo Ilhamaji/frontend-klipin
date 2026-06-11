@@ -42,6 +42,22 @@ type SearchResponse = {
   articles: Article[];
 };
 
+const formatSummaryMarkdown = (summary: any): string => {
+  if (!summary) return "";
+  if (typeof summary === "string") return summary;
+
+  const parts = [];
+  if (summary.identitas) parts.push(`### Identitas\n${summary.identitas}`);
+  if (summary.kompetensi) parts.push(`### Kompetensi\n${summary.kompetensi}`);
+  if (summary.isi_materi) parts.push(`### Isi Materi\n${summary.isi_materi}`);
+  if (summary.temuan) parts.push(`### Temuan\n${summary.temuan}`);
+  if (summary.kesimpulan) parts.push(`### Kesimpulan\n${summary.kesimpulan}`);
+
+  if (parts.length > 0) return parts.join("\n\n");
+
+  return summary.summary || summary.text || JSON.stringify(summary, null, 2);
+};
+
 export default function Page() {
   return (
     <Suspense
@@ -226,7 +242,8 @@ function ResearchCanvas() {
 
   const handleCopySummary = () => {
     if (summaryData?.summary) {
-      navigator.clipboard.writeText(summaryData.summary);
+      const textToCopy = formatSummaryMarkdown(summaryData.summary);
+      navigator.clipboard.writeText(textToCopy);
       alert("Ringkasan berhasil disalin!");
     } else {
       alert("Tidak ada ringkasan untuk disalin.");
@@ -241,7 +258,8 @@ function ResearchCanvas() {
     
     setIsSavingNote(true);
     try {
-      const res = await addNote(`Ringkasan: ${query}`, summaryData.summary);
+      const contentString = formatSummaryMarkdown(summaryData.summary);
+      const res = await addNote(`Ringkasan: ${query}`, contentString);
       if (!res?.error) {
         alert("Ringkasan berhasil disimpan ke catatan!");
       } else {
@@ -497,7 +515,7 @@ function ResearchCanvas() {
                         animate={{ opacity: 1 }}
                       >
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {summaryData.summary}
+                          {formatSummaryMarkdown(summaryData.summary)}
                         </ReactMarkdown>
                       </motion.div>
                     ) : (

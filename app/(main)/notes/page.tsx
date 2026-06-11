@@ -207,7 +207,7 @@ export default function NotesPage() {
                     "p-4 rounded-xl cursor-pointer transition-all border",
                     activeNote?.id === note.id
                       ? "bg-surface-container-lowest border-primary/30 shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
-                      : "bg-transparent border-transparent hover:bg-surface-container",
+                      : "bg-surface-container-lowest border-outline-variant/30 hover:bg-surface-container",
                   )}
                 >
                   <h3 className="font-hanken font-semibold text-on-surface mb-1 truncate">

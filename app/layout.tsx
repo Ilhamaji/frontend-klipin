@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Hanken_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -38,9 +37,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-on-background font-inter font-[family-name:var(--font-inter)]">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-        </ThemeProvider>
       </body>
     </html>
   );
