@@ -185,7 +185,7 @@ function ResearchCanvas() {
           }
           updatedHistory = [
             newHistoryItem,
-            ...currentHistory.filter((_, idx) => idx !== existingIdx),
+            ...currentHistory.filter((_: any, idx: number) => idx !== existingIdx),
           ];
         } else {
           updatedHistory = [newHistoryItem, ...currentHistory.slice(0, 49)];

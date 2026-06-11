@@ -52,7 +52,7 @@ export default function RegisterPage() {
               <img
                 src="/klipin.png"
                 alt="Klipin Logo"
-                className="w-auto h-30 object-contain"
+                className="w-auto h-20 object-contain"
               />
             </div>
             {/* Title */}

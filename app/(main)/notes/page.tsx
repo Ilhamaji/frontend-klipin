@@ -18,6 +18,8 @@ import { ConfirmationModal } from "@/components/ConfirmationModal";
 // Export PDF
 import { FileDown } from "lucide-react";
 import jsPDF from "jspdf";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Note = {
   id: number;
@@ -341,9 +343,11 @@ export default function NotesPage() {
                   <h1 className="typography-display-lg text-on-surface mb-8">
                     {activeNote.title}
                   </h1>
-                  <p className="typography-body-lg text-on-surface-variant leading-relaxed whitespace-pre-wrap">
-                    {activeNote.contents}
-                  </p>
+                  <div className="typography-body-lg text-on-surface-variant leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {activeNote.contents}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>

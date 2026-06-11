@@ -48,7 +48,7 @@ export default function LoginPage() {
               <img
                 src="/klipin.png"
                 alt="Klipin Logo"
-                className="w-auto h-30 object-contain"
+                className="w-auto h-20 object-contain"
               />
             </div>
             <h2 className="text-xl font-semibold text-slate-800 text-center mb-6">
