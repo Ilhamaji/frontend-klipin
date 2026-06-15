@@ -9,7 +9,7 @@ export default function MainLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <Sidebar />
-      <main className="flex-1 h-full overflow-hidden relative z-0">
+      <main className="flex-1 h-full overflow-hidden relative">
         <IdleWrapper>
           {children}
         </IdleWrapper>
