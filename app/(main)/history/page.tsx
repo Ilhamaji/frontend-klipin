@@ -5,51 +5,53 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Search, Trash2, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { articleHistory } from "@/lib/api";
+
+type Article = {
+  id: number;
+  query_id: number;
+  title: string;
+  url: string;
+  relevance_score: number;
+  created_at: string;
+};
 
 type HistoryItem = {
-  id: string;
-  query: string;
-  timestamp: number;
-  matches: number;
+  id: number;
+  query_text: string;
+  created_at: string;
+  articles: Article[];
 };
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: "clear_all" | "remove_item";
-    targetId?: string;
+    targetId?: number;
   }>({ isOpen: false, type: "clear_all" });
 
   useEffect(() => {
-    const saved = localStorage.getItem("search_history");
-    if (saved) {
+    const fetchHistory = async () => {
       try {
-        setHistory(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse history");
+        const data = await articleHistory();
+        setHistory(data.data);
+      } catch (error) {
+        console.error("Gagal mengambil history:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchHistory();
   }, []);
 
-  const clearHistory = () => {
-    localStorage.removeItem("search_history");
-    setHistory([]);
-  };
-
-  const removeHistoryItem = (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const newHistory = history.filter((h) => h.id !== id);
-    setHistory(newHistory);
-    localStorage.setItem("search_history", JSON.stringify(newHistory));
-  };
-
-  // Note: To re-search, we could pass it via query params to the canvas, but since the canvas uses local state,
-  // we will just redirect to canvas and let the user type. Or ideally, we'd use URL state in the canvas.
-  const handleReSearch = (query: string) => {
-    // For now, redirect to home. In a robust app, home would read ?q=query
-    router.push(`/?q=${encodeURIComponent(query)}`);
+  const handleReSearch = (item: HistoryItem) => {
+    // simpan articles ke localStorage sebelum pindah halaman
+    localStorage.setItem("history_articles", JSON.stringify(item.articles));
+    router.push(`/?q=${encodeURIComponent(item.query_text)}&from_history=true`);
   };
 
   return (
@@ -57,32 +59,30 @@ export default function HistoryPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="typography-headline-md text-on-surface mb-2">Riwayat Pencarian</h2>
+            <h2 className="typography-headline-md text-on-surface mb-2">
+              Riwayat Pencarian
+            </h2>
             <p className="typography-body-md text-on-surface-variant">
               Tinjau kembali riwayat pencarian anda.
             </p>
           </div>
-          {history.length > 0 && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setModalConfig({ isOpen: true, type: "clear_all" })}
-              className="px-4 py-2 bg-surface-container text-error hover:bg-error/10 rounded-lg transition-colors flex items-center gap-2 font-medium typography-label-md shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-              Hapus Semua
-            </motion.button>
-          )}
         </div>
 
-        {history.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <p className="text-on-surface-variant">Memuat riwayat...</p>
+          </div>
+        ) : history.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
               <Clock className="w-8 h-8 text-outline" />
             </div>
-            <h3 className="typography-headline-sm text-on-surface mb-2">Belum ada riwayat</h3>
+            <h3 className="typography-headline-sm text-on-surface mb-2">
+              Belum ada riwayat
+            </h3>
             <p className="text-on-surface-variant max-w-md">
-              Riwayat pencarian anda akan muncul di sini setelah anda melakukan pencarian.
+              Riwayat pencarian anda akan muncul di sini setelah anda melakukan
+              pencarian.
             </p>
           </div>
         ) : (
@@ -95,7 +95,7 @@ export default function HistoryPage() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: idx * 0.05 }}
                   key={item.id}
-                  onClick={() => handleReSearch(item.query)}
+                  onClick={() => handleReSearch(item)}
                   className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm hover:shadow-md transition-all cursor-pointer group flex items-center justify-between"
                 >
                   <div className="flex items-center gap-4">
@@ -104,26 +104,18 @@ export default function HistoryPage() {
                     </div>
                     <div>
                       <h4 className="typography-label-md text-on-surface font-semibold text-base mb-1">
-                        {item.query}
+                        {item.query_text}
                       </h4>
                       <div className="flex items-center gap-3 typography-label-sm text-on-surface-variant">
-                        <span>{new Date(item.timestamp).toLocaleString()}</span>
+                        <span>
+                          {new Date(item.created_at).toLocaleString("id-ID")}
+                        </span>
                         <span>•</span>
-                        <span>{item.matches} Materi sesuai</span>
+                        <span>{item.articles.length} Materi sesuai</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setModalConfig({ isOpen: true, type: "remove_item", targetId: item.id });
-                      }}
-                      className="p-2 text-outline hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      aria-label="Remove item"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                     <div className="p-2 text-primary">
                       <ExternalLink className="w-4 h-4" />
                     </div>
@@ -133,30 +125,6 @@ export default function HistoryPage() {
             </AnimatePresence>
           </div>
         )}
-        <ConfirmationModal
-          isOpen={modalConfig.isOpen}
-          onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
-          onConfirm={() => {
-            if (modalConfig.type === "clear_all") {
-              clearHistory();
-            } else if (modalConfig.type === "remove_item" && modalConfig.targetId) {
-              removeHistoryItem(modalConfig.targetId);
-            }
-            setModalConfig((prev) => ({ ...prev, isOpen: false }));
-          }}
-          title={
-            modalConfig.type === "clear_all"
-              ? "Konfirmasi Hapus Semua Riwayat"
-              : "Konfirmasi Hapus Riwayat"
-          }
-          message={
-            modalConfig.type === "clear_all"
-              ? "Apakah Anda yakin ingin menghapus seluruh riwayat pencarian Anda? Tindakan ini tidak dapat dibatalkan."
-              : "Apakah Anda yakin ingin menghapus item riwayat pencarian ini?"
-          }
-          confirmLabel="Hapus"
-          variant="danger"
-        />
       </div>
     </div>
   );

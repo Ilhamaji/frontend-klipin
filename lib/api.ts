@@ -80,6 +80,71 @@ export async function searchArticles(query: string) {
   return response.json();
 }
 
+// Get history pencarian
+export async function articleHistory() {
+  const response = await fetch(`${BASE_URL}/search/history`, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal mengambil history pencarian");
+  }
+
+  return data;
+}
+
+// Get saved article
+export async function getAllSavedArticle() {
+  const response = await fetch(`${BASE_URL}/library/saved-articles`, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal mengambil data artikel yang disimpan!");
+  }
+
+  return data;
+}
+
+// Add artikel ke lib
+export async function saveArticle(articleId: number) {
+  const response = await fetch(`${BASE_URL}/library/saved-articles`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ articleId }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal menyimpan artikel!");
+  }
+
+  return data;
+}
+
+// Delete artikel dari lib
+export async function deleteSavedArticle(articleId: number) {
+  const response = await fetch(`${BASE_URL}/library/saved-articles/${articleId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal menghapus artikel!");
+  }
+
+  return data;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function summarize(data?: any) {
   const response = await fetch(`${BASE_URL}/summarize`, {

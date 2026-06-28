@@ -17,16 +17,18 @@ import {
   User,
   Paperclip,
   FileText,
-  ChevronDown
+  ChevronDown,
 } from "lucide-react";
 import { searchArticles, summarize, addNote, getProfile } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Cookies from "js-cookie";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { saveArticle } from "@/lib/api";
 
 type Article = {
+  id: number;
   title: string;
   url: string;
   abstract: string;
@@ -79,18 +81,18 @@ function ResearchCanvas() {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [greeting, setGreeting] = useState("Selamat Datang");
-    useEffect(() => {
-      const hour = new Date().getHours();
-      if (hour >= 5 && hour < 12) setGreeting("Selamat Pagi");
-      else if (hour >= 12 && hour < 15) setGreeting("Selamat Siang");
-      else if (hour >= 15 && hour < 18) setGreeting("Selamat Sore");
-      else setGreeting("Selamat Malam");
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) setGreeting("Selamat Pagi");
+    else if (hour >= 12 && hour < 15) setGreeting("Selamat Siang");
+    else if (hour >= 15 && hour < 18) setGreeting("Selamat Sore");
+    else setGreeting("Selamat Malam");
 
-      // Effect data profile
-      getProfile()
+    // Effect data profile
+    getProfile()
       .then((res) => setUsername(res.data.username))
       .catch(() => setUsername(""));
-    }, []);
+  }, []);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [summaryData, setSummaryData] = useState<{
     url: string;
@@ -281,7 +283,9 @@ function ResearchCanvas() {
           }
           updatedHistory = [
             newHistoryItem,
-            ...currentHistory.filter((_: any, idx: number) => idx !== existingIdx),
+            ...currentHistory.filter(
+              (_: any, idx: number) => idx !== existingIdx,
+            ),
           ];
         } else {
           updatedHistory = [newHistoryItem, ...currentHistory.slice(0, 49)];
@@ -295,11 +299,15 @@ function ResearchCanvas() {
     } catch (error: any) {
       console.error(error);
       if (error.message && error.message.includes("401")) {
-        setSearchError("Sesi Anda telah berakhir. Mengarahkan ke halaman login...");
+        setSearchError(
+          "Sesi Anda telah berakhir. Mengarahkan ke halaman login...",
+        );
         Cookies.remove("auth_token");
         router.push("/login");
       } else {
-        setSearchError(error.message || "Terjadi kesalahan saat melakukan pencarian.");
+        setSearchError(
+          error.message || "Terjadi kesalahan saat melakukan pencarian.",
+        );
       }
     } finally {
       setIsSearching(false);
@@ -321,15 +329,12 @@ function ResearchCanvas() {
       );
       if (existingIdx >= 0) {
         currentHistory[existingIdx].summaryData = sumData;
-        localStorage.setItem(
-          "search_history",
-          JSON.stringify(currentHistory),
-        );
+        localStorage.setItem("search_history", JSON.stringify(currentHistory));
       }
     } catch (sumErr: any) {
       setSummaryData({
         url: article.url,
-        summary: `⚠️ Tidak dapat membuat ringkasan: ${sumErr.message || "Terjadi kesalahan pada server."}`,
+        summary: `Tidak dapat membuat ringkasan: ${sumErr.message || "Terjadi kesalahan pada server."}`,
       });
     } finally {
       setIsSummarizing(false);
@@ -351,7 +356,7 @@ function ResearchCanvas() {
       alert("Tidak ada ringkasan untuk disimpan.");
       return;
     }
-    
+
     setIsSavingNote(true);
     try {
       const contentString = formatSummaryMarkdown(summaryData.summary);
@@ -381,7 +386,12 @@ function ResearchCanvas() {
       </header> */}
 
       {/* Main Content Area */}
-      <div className={cn("flex-1 overflow-x-hidden px-4 md:px-8 relative flex flex-col", hasSearched ? "overflow-hidden" : "overflow-y-auto")}>
+      <div
+        className={cn(
+          "flex-1 overflow-x-hidden px-4 md:px-8 relative flex flex-col",
+          hasSearched ? "overflow-hidden" : "overflow-y-auto",
+        )}
+      >
         <AnimatePresence mode="wait">
           {!hasSearched ? (
             <motion.div
@@ -398,7 +408,9 @@ function ResearchCanvas() {
                 {greeting} {username || "User"}!
               </h1>
               <p className="text-base md:text-lg text-slate-500 mb-10 max-w-2xl leading-relaxed">
-                Masukan kata kunci pembelajaran yang ingin dicari dan AI akan membantu mengklasifikasikan hasil berdasarkan jenjang dan mata pelajarannya.
+                Masukan kata kunci pembelajaran yang ingin dicari dan AI akan
+                membantu mengklasifikasikan hasil berdasarkan jenjang dan mata
+                pelajarannya.
               </p>
 
               <form onSubmit={handleSearch} className="w-full relative group">
@@ -454,7 +466,9 @@ function ResearchCanvas() {
                     <div className="col-span-2 bg-red-50 border border-red-100 rounded-xl p-5 text-red-600 text-sm shadow-sm flex items-start gap-3">
                       <HelpCircle className="w-5 h-5 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold block mb-1">Pencarian Gagal</span>
+                        <span className="font-semibold block mb-1">
+                          Pencarian Gagal
+                        </span>
                         {searchError}
                       </div>
                     </div>
@@ -469,85 +483,77 @@ function ResearchCanvas() {
                     </>
                   ) : (
                     searchData?.articles.map((article, idx) => (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      key={idx}
-                      onClick={() => handleSummarize(article)}
-                      className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer hover:border-[#0f766e]/30"
-                    >
-                      <div className="flex gap-2 mb-3">
-                        <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs font-medium rounded-md flex items-center gap-1">
-                          <BookOpen className="w-3 h-3" />
-                          {article.subject || "General"}
-                        </span>
-                        <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs font-medium rounded-md">
-                          {article.jenjang || "N/A"}
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-[15px] text-slate-800 leading-tight mb-2">
-                        {article.title || "Untitled Document"}
-                      </h4>
-                      <p className="text-slate-500 line-clamp-3 mb-4 text-sm leading-relaxed">
-                        {article.abstract || "No abstract available."}
-                      </p>
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-xs font-medium text-slate-400">
-                          {article.year} • {article.authors?.[0] || "Unknown"}
-                        </span>
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const current = JSON.parse(
-                                localStorage.getItem("saved_articles") || "[]",
-                              );
-                              if (
-                                !current.find((a: any) => a.url === article.url)
-                              ) {
-                                localStorage.setItem(
-                                  "saved_articles",
-                                  JSON.stringify([
-                                    {
-                                      ...article,
-                                      id: article.url,
-                                      savedAt: Date.now(),
-                                    },
-                                    ...current,
-                                  ]),
-                                );
-                                alert("Article saved to library!");
-                              } else {
-                                alert("Article already in library!");
-                              }
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-[#0f766e] transition-colors"
-                            title="Save to Library"
-                          >
-                            <BookmarkPlus className="w-4 h-4" />
-                          </motion.button>
-                          {article.url && (
-                            <motion.a
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        key={idx}
+                        onClick={() => handleSummarize(article)}
+                        className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer hover:border-[#0f766e]/30"
+                      >
+                        <div className="flex gap-2 mb-3">
+                          <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs font-medium rounded-md flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" />
+                            {article.subject || "General"}
+                          </span>
+                          <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs font-medium rounded-md">
+                            {article.jenjang || "N/A"}
+                          </span>
+                        </div>
+                        <h4 className="font-semibold text-[15px] text-slate-800 leading-tight mb-2">
+                          {article.title || "Untitled Document"}
+                        </h4>
+                        <p className="text-slate-500 line-clamp-3 mb-4 text-sm leading-relaxed">
+                          {article.abstract || "No abstract available."}
+                        </p>
+                        <div className="flex justify-between items-center mt-auto">
+                          <span className="text-xs font-medium text-slate-400">
+                            {article.year} • {article.authors?.[0] || "Unknown"}
+                          </span>
+                          <div className="flex gap-2">
+                            <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
-                              href={article.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 text-[#0f766e] hover:text-[#0d645d] transition-colors"
-                              title="Read Original"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                console.log("article:", article);
+                                try {
+                                  // save artikel
+                                  await saveArticle(article.id);
+                                  alert(
+                                    "Artikel berhasil disimpan ke library!",
+                                  );
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                } catch (error: any) {
+                                  alert(
+                                    error.message || "Gagal menyimpan artikel.",
+                                  );
+                                }
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-[#0f766e] transition-colors"
+                              title="Save to Library"
                             >
-                              <ArrowRight className="w-4 h-4" />
-                            </motion.a>
-                          )}
+                              <BookmarkPlus className="w-4 h-4" />
+                            </motion.button>
+                            {article.url && (
+                              <motion.a
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                href={article.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 text-[#0f766e] hover:text-[#0d645d] transition-colors"
+                                title="Read Original"
+                              >
+                                <ArrowRight className="w-4 h-4" />
+                              </motion.a>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
+                      </motion.div>
+                    ))
+                  )}
                 </div>
                 {/* Scroll Progress Bar */}
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 rounded-full overflow-hidden shrink-0 z-20">
@@ -596,7 +602,9 @@ function ResearchCanvas() {
                         ) : (
                           <BookmarkPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         )}
-                        <span className="hidden sm:inline">Simpan ke Catatan</span>
+                        <span className="hidden sm:inline">
+                          Simpan ke Catatan
+                        </span>
                         <span className="sm:hidden">Simpan</span>
                       </button>
                     </div>
@@ -631,7 +639,11 @@ function ResearchCanvas() {
                     ) : (
                       <div className="flex flex-col items-center justify-center text-center h-full text-slate-400 pt-20 pb-10">
                         <Bot className="w-12 h-12 mb-4 opacity-30" />
-                        <p>Silakan pilih salah satu materi di sebelah kiri<br/>untuk melihat ringkasan.</p>
+                        <p>
+                          Silakan pilih salah satu materi di sebelah kiri
+                          <br />
+                          untuk melihat ringkasan.
+                        </p>
                       </div>
                     )}
                   </div>
