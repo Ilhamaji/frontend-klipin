@@ -55,6 +55,7 @@ const formatSummaryMarkdown = (summary: any): string => {
   if (summary.isi_materi) parts.push(`### Isi Materi\n${summary.isi_materi}`);
   if (summary.temuan) parts.push(`### Temuan\n${summary.temuan}`);
   if (summary.kesimpulan) parts.push(`### Kesimpulan\n${summary.kesimpulan}`);
+  if (summary.daftar_pustaka) parts.push(`### Daftar Pustaka\n${summary.daftar_pustaka}`);
 
   if (parts.length > 0) return parts.join("\n\n");
 
