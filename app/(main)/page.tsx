@@ -18,6 +18,7 @@ import {
   Paperclip,
   FileText,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 import { searchArticles, summarize, addNote, getProfile } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -45,17 +46,66 @@ type SearchResponse = {
   articles: Article[];
 };
 
-const formatSummaryMarkdown = (summary: any): string => {
+const cleanMarkdownSymbols = (str: any): string => {
+  if (!str) return "";
+  if (typeof str !== "string") return String(str);
+  return str
+    .replace(/\*\*/g, "") // remove bold asterisks
+    .replace(/^\s+|\s+$/g, "") // trim whitespace/newlines
+    .trim();
+};
+
+const formatSummaryMarkdown = (
+  summary: any,
+  article?: Article | null,
+  includeTitle = true
+): string => {
   if (!summary) return "";
-  if (typeof summary === "string") return summary;
 
   const parts = [];
-  if (summary.identitas) parts.push(`### Identitas\n${summary.identitas}`);
-  if (summary.kompetensi) parts.push(`### Kompetensi\n${summary.kompetensi}`);
-  if (summary.isi_materi) parts.push(`### Isi Materi\n${summary.isi_materi}`);
-  if (summary.temuan) parts.push(`### Temuan\n${summary.temuan}`);
-  if (summary.kesimpulan) parts.push(`### Kesimpulan\n${summary.kesimpulan}`);
-  if (summary.daftar_pustaka) parts.push(`### Daftar Pustaka\n${summary.daftar_pustaka}`);
+
+  if (article) {
+    const summaryObj = typeof summary === "object" ? summary : {};
+    const title = cleanMarkdownSymbols(
+      summaryObj.judul || summaryObj.title || summaryObj.identitas || article.title
+    );
+    const author = cleanMarkdownSymbols(
+      summaryObj.author || article.authors?.join(", ")
+    );
+    if (includeTitle && title) {
+      parts.push(`# ${title}`);
+    }
+    if (author) {
+      parts.push(`**Penulis:** ${author}`);
+    }
+    if (article.url) {
+      parts.push(`**Link Dokumen:** [Buka Dokumen](${article.url})`);
+    }
+  }
+
+  if (typeof summary === "string") {
+    parts.push(summary);
+  } else {
+    // Only display identitas if we didn't prepend the article details
+    if (summary.identitas && !article) {
+      parts.push(`### Identitas\n${summary.identitas}`);
+    }
+    if (summary.kompetensi) {
+      parts.push(`### Kompetensi\n${summary.kompetensi}`);
+    }
+    if (summary.isi_materi) {
+      parts.push(`### Isi Materi\n${summary.isi_materi}`);
+    }
+    if (summary.temuan) {
+      parts.push(`### Temuan\n${summary.temuan}`);
+    }
+    if (summary.kesimpulan) {
+      parts.push(`### Kesimpulan\n${summary.kesimpulan}`);
+    }
+    if (summary.daftar_pustaka) {
+      parts.push(`### Daftar Pustaka\n${summary.daftar_pustaka}`);
+    }
+  }
 
   if (parts.length > 0) return parts.join("\n\n");
 
@@ -102,6 +152,10 @@ function ResearchCanvas() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSavingNote, setIsSavingNote] = useState(false);
+
+  const currentArticle = searchData?.articles?.find(
+    (a) => a.url === summaryData?.url
+  );
 
   const leftScrollRef = useRef<HTMLDivElement>(null);
   const rightScrollRef = useRef<HTMLDivElement>(null);
@@ -344,7 +398,7 @@ function ResearchCanvas() {
 
   const handleCopySummary = () => {
     if (summaryData?.summary) {
-      const textToCopy = formatSummaryMarkdown(summaryData.summary);
+      const textToCopy = formatSummaryMarkdown(summaryData.summary, currentArticle, true);
       navigator.clipboard.writeText(textToCopy);
       alert("Ringkasan berhasil disalin!");
     } else {
@@ -360,8 +414,9 @@ function ResearchCanvas() {
 
     setIsSavingNote(true);
     try {
-      const contentString = formatSummaryMarkdown(summaryData.summary);
-      const res = await addNote(`Ringkasan: ${query}`, contentString);
+      const contentString = formatSummaryMarkdown(summaryData.summary, currentArticle, false);
+      const noteTitle = currentArticle?.title ? `Ringkasan: ${currentArticle.title}` : `Ringkasan: ${query}`;
+      const res = await addNote(noteTitle, contentString);
       if (!res?.error) {
         alert("Ringkasan berhasil disimpan ke catatan!");
       } else {
@@ -632,7 +687,57 @@ function ResearchCanvas() {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
+                        className="space-y-6"
                       >
+                        {(() => {
+                          const summaryObj = typeof summaryData.summary === "object" ? summaryData.summary : {};
+                          const title = cleanMarkdownSymbols(
+                            (summaryObj as any).judul ||
+                              (summaryObj as any).title ||
+                              (summaryObj as any).identitas ||
+                              currentArticle?.title
+                          );
+                          const author = cleanMarkdownSymbols(
+                            (summaryObj as any).author ||
+                              currentArticle?.authors?.join(", ")
+                          );
+
+                          if (!title && !author) return null;
+
+                          return (
+                            <div className="border-b border-slate-100 pb-4 mb-2">
+                              {title && (
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug mb-3">
+                                  {title}
+                                </h2>
+                              )}
+                              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500">
+                                {author && (
+                                  <span className="font-medium bg-slate-50 text-slate-600 px-3 py-1 rounded-full border border-slate-100">
+                                    Penulis: {author}
+                                  </span>
+                                )}
+                                {currentArticle?.year && (
+                                  <span className="font-medium bg-slate-50 text-slate-600 px-3 py-1 rounded-full border border-slate-100">
+                                    Tahun: {currentArticle.year}
+                                  </span>
+                                )}
+                                {currentArticle?.url && (
+                                  <a
+                                    href={currentArticle.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 font-medium bg-[#e6f2f1] text-[#0f766e] hover:bg-[#0f766e] hover:text-white px-3 py-1 rounded-full border border-[#0f766e]/10 transition-all duration-200"
+                                  >
+                                    <span>Buka Dokumen</span>
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {formatSummaryMarkdown(summaryData.summary)}
                         </ReactMarkdown>

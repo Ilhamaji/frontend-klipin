@@ -30,6 +30,15 @@ type Note = {
   updated_at: string;
 };
 
+const stripMarkdown = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/[#*`_~]/g, "") // remove formatting characters: #, *, `, _, ~
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // replace markdown links [Text](URL) with just Text
+    .replace(/\s+/g, " ") // normalize spacing
+    .trim();
+};
+
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
@@ -216,7 +225,7 @@ export default function NotesPage() {
                     {note.title || "Untitled"}
                   </h3>
                   <p className="text-sm text-outline truncate mb-2">
-                    {note.contents || "No content"}
+                    {stripMarkdown(note.contents) || "No content"}
                   </p>
                   <div className="flex items-center text-xs text-on-surface-variant gap-1">
                     <Clock className="w-3 h-3" />
