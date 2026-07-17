@@ -13,6 +13,8 @@ function getHeaders() {
   };
 }
 
+
+
 // Login
 export async function login(username: string, password: string) {
   const response = await fetch(`${BASE_URL}/auth/login`, {

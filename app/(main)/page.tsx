@@ -20,13 +20,12 @@ import {
   ChevronDown,
   ExternalLink,
 } from "lucide-react";
-import { searchArticles, summarize, addNote, getProfile } from "@/lib/api";
+import { searchArticles, summarize, addNote, getProfile, saveArticle } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Cookies from "js-cookie";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { saveArticle } from "@/lib/api";
 
 type Article = {
   id: number;
@@ -110,6 +109,65 @@ const formatSummaryMarkdown = (
   if (parts.length > 0) return parts.join("\n\n");
 
   return summary.summary || summary.text || JSON.stringify(summary, null, 2);
+};
+
+const translateDuration = (duration: string): string => {
+  let result = duration;
+  result = result.replace(/(\d+)\.\d+s/g, "$1s");
+  result = result
+    .replace(/(\d+)h/g, "$1 jam ")
+    .replace(/(\d+)m/g, "$1 menit ")
+    .replace(/(\d+)s/g, "$1 detik ")
+    .trim();
+  return result.replace(/\s+/g, " ");
+};
+
+const formatInnerError = (msg: string): string => {
+  const isRateLimit =
+    msg.toLowerCase().includes("rate limit") ||
+    msg.toLowerCase().includes("too many requests") ||
+    msg.toLowerCase().includes("rate_limit_exceeded") ||
+    msg.toLowerCase().includes("please try again") ||
+    msg.toLowerCase().includes("429");
+
+  if (isRateLimit) {
+    const tryAgainMatch = msg.match(/Please try again in\s+([0-9a-zA-Z.]+)/i);
+    if (tryAgainMatch && tryAgainMatch[1]) {
+      let rawDuration = tryAgainMatch[1];
+      if (rawDuration.endsWith(".")) {
+        rawDuration = rawDuration.slice(0, -1);
+      }
+      const translated = translateDuration(rawDuration);
+      return `Batas limit permintaan tercapai. Silakan coba lagi dalam ${translated}.`;
+    }
+    return "Batas limit permintaan tercapai. Silakan coba beberapa saat lagi.";
+  }
+
+  if (msg.includes("Koneksi gagal ke Groq API")) {
+    return "Koneksi ke layanan AI (Groq) gagal. Silakan coba beberapa saat lagi.";
+  }
+
+  return msg;
+};
+
+const cleanErrorMessage = (rawMessage: string): string => {
+  if (!rawMessage) return "Terjadi kesalahan pada server.";
+
+  const detailIndex = rawMessage.indexOf("Detail:");
+  if (detailIndex !== -1) {
+    const jsonStr = rawMessage.substring(detailIndex + 7).trim();
+    try {
+      const parsed = JSON.parse(jsonStr);
+      const innerMessage = parsed?.error?.message || parsed?.message;
+      if (innerMessage) {
+        return formatInnerError(innerMessage);
+      }
+    } catch (e) {
+      // Ignore parse error
+    }
+  }
+
+  return formatInnerError(rawMessage);
 };
 
 export default function Page() {
@@ -387,9 +445,10 @@ function ResearchCanvas() {
         localStorage.setItem("search_history", JSON.stringify(currentHistory));
       }
     } catch (sumErr: any) {
+      const userFriendlyMessage = cleanErrorMessage(sumErr.message);
       setSummaryData({
         url: article.url,
-        summary: `Tidak dapat membuat ringkasan: ${sumErr.message || "Terjadi kesalahan pada server."}`,
+        summary: `Tidak dapat membuat ringkasan: ${userFriendlyMessage}`,
       });
     } finally {
       setIsSummarizing(false);
@@ -691,12 +750,12 @@ function ResearchCanvas() {
                       >
                         {(() => {
                           const summaryObj = typeof summaryData.summary === "object" ? summaryData.summary : {};
-                          const title = cleanMarkdownSymbols(
-                            (summaryObj as any).judul ||
-                              (summaryObj as any).title ||
-                              (summaryObj as any).identitas ||
-                              currentArticle?.title
-                          );
+                           const title = cleanMarkdownSymbols(
+                             (summaryObj as any).judul ||
+                               (summaryObj as any).title ||
+                               (summaryObj as any).identitas ||
+                               currentArticle?.title
+                           );
                           const author = cleanMarkdownSymbols(
                             (summaryObj as any).author ||
                               currentArticle?.authors?.join(", ")
