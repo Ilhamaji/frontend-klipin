@@ -47,8 +47,16 @@ export function Sidebar() {
           instead, which keeps navigation reachable with a thumb and frees the
           top of the screen for content. */}
       <aside className="hidden md:flex h-full w-64 shrink-0 flex-col border-r border-slate-100 bg-white py-6 font-sans">
-        <div className="flex h-full w-64 flex-col px-4">
-          <div className="mb-6 px-2 flex items-center min-w-0">
+        {/* Single w-64 with px-4 inside: the previous nested w-64 + px-4 made
+            the inner box 256px wide *plus* 32px of padding, so its children
+            could sit 16px past the sidebar border. */}
+        <div className="flex h-full min-w-0 flex-col px-4">
+          {/* The logo and the badge together are wider than the 224px of
+              usable sidebar width at the sm breakpoint (80px tall logo is
+              ~172px wide, the badge ~48px incl. gap), which pushed the badge
+              past the sidebar edge. Letting the logo shrink keeps both inside
+              instead of forcing the row wider than its container. */}
+          <div className="mb-6 px-2 flex items-center min-w-0 overflow-hidden">
             <Image
               src="/klipin.png"
               alt="Klipin Logo"
@@ -57,9 +65,9 @@ export function Sidebar() {
               priority
               unoptimized
               style={{ width: "auto", height: "auto" }}
-              className="h-16 w-auto shrink-0 object-contain sm:h-20"
+              className="h-16 w-auto min-w-0 object-contain object-left sm:h-20"
             />
-            <span className="ml-2 shrink-0 rounded-full border border-teal-200/60 bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 select-none">
+            <span className="ml-2 shrink-0 whitespace-nowrap rounded-full border border-teal-200/60 bg-teal-50 px-1.5 py-0.5 text-[10px] leading-none font-bold uppercase tracking-normal text-teal-700 select-none">
               Demo
             </span>
           </div>
