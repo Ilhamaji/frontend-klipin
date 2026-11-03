@@ -18,10 +18,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "The Research System",
+  title: "Klipin (Demo) - The Research System",
   description: "AI-powered academic research and summary tool.",
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/klipin.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/klipin.png",
+    apple: "/klipin.png",
   },
 };
 

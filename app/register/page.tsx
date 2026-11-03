@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { register } from "@/lib/api";
@@ -15,33 +16,28 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  setIsLoading(true);
-  setErrors([]);
+    setIsLoading(true);
+    setErrors([]);
 
-  try {
-    await register(username, password);
-
-    router.push("/login");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    if (err.data) {
-      const messages = err.data.map(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (e: any) => e.message
-      );
-
-      setErrors(messages);
-    } else if (err instanceof Error) {
-      setErrors([err.message]);
-    } else {
-      setErrors(["An error occurred during register."]);
+    try {
+      await register(username, password);
+      router.push("/login");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      if (err?.data && Array.isArray(err.data)) {
+        const messages = err.data.map((item: any) => item.message || String(item));
+        setErrors(messages);
+      } else if (err?.message) {
+        setErrors([err.message]);
+      } else {
+        setErrors(["Terjadi kesalahan saat mendaftar akun. Silakan coba lagi nanti."]);
+      }
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20">
@@ -49,11 +45,17 @@ export default function RegisterPage() {
         <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
           <div className="p-8">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <img
+              <Image
                 src="/klipin.png"
                 alt="Klipin Logo"
+                width={160}
+                height={80}
+                priority
                 className="w-auto h-20 object-contain"
               />
+              <span className="self-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
+                Demo
+              </span>
             </div>
             {/* Title */}
             <h2 className="text-xl font-semibold text-slate-800 text-center mb-6">
@@ -63,14 +65,14 @@ export default function RegisterPage() {
             {/* Form regis */}
             <form onSubmit={handleRegister} className="space-y-5">
               {errors.length > 0 && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
-                <ul className="list-disc list-inside space-y-1">
-                  {errors.map((msg, index) => (
-                    <li key={index}>{msg}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
+                  <ul className="list-disc list-inside space-y-1">
+                    {errors.map((msg, index) => (
+                      <li key={index}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {/* Username */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-600 ml-1">
@@ -97,9 +99,8 @@ export default function RegisterPage() {
                   <label className="text-xs font-medium text-slate-600 ml-1">
                     Password
                   </label>
-                  <span className="text-[2px] text-red-500 ml-1 italic">
-                    Password minimal 8 karakter, 1 huruf besar dan kecil, serta 1
-                    angka.
+                  <span className="text-[11px] text-slate-500 ml-1">
+                    Minimal 8 karakter, kombinasi huruf besar, kecil, dan angka.
                   </span>
                 </div>
                 <div className="relative">
@@ -110,7 +111,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="��������"
                     className="w-full pl-10 pr-10 py-2.5 bg-[#f1f5f9] rounded-lg border border-transparent focus:bg-white focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/20 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 tracking-wide font-medium"
                     required
                   />
@@ -150,14 +151,13 @@ export default function RegisterPage() {
               </div>
             </form>
 
-            {/* Link balik ke login */}
             <p className="text-center text-xs text-slate-500 mt-4">
               Sudah punya akun?{" "}
               <Link
                 href="/login"
                 className="text-[#0f766e] font-medium hover:underline"
               >
-                Login sekarang
+                Masuk di sini
               </Link>
             </p>
           </div>

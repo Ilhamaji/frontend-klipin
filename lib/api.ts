@@ -1,9 +1,6 @@
 import Cookies from "js-cookie";
 
-// BE Local
-// const BASE_URL = "http://localhost:3001/api";
-
-const BASE_URL = "https://backend-skripsi.netlify.app/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://backend-skripsi.netlify.app/api";
 
 function getHeaders() {
   const token = Cookies.get("auth_token");
@@ -13,218 +10,344 @@ function getHeaders() {
   };
 }
 
+async function handleResponseError(response: Response, defaultMessage: string): Promise<never> {
+  const status = response.status;
+  let errorData: any = null;
 
+  try {
+    const text = await response.text();
+    try {
+      errorData = JSON.parse(text);
+    } catch {
+      errorData = { rawText: text };
+    }
+  } catch {
+    errorData = null;
+  }
+
+  if (status === 401) {
+    throw new Error("Sesi login Anda telah kedaluwarsa. Silakan masuk kembali.");
+  }
+
+  if (status === 403) {
+    throw new Error("Akses ditolak. Anda tidak memiliki izin.");
+  }
+
+  if (status === 404) {
+    throw new Error(errorData?.message || "Data atau layanan tidak ditemukan.");
+  }
+
+  if (status === 504) {
+    throw new Error("Layanan backend/AI membutuhkan waktu lebih lama untuk merespons (Gateway Timeout). Silakan coba beberapa saat lagi.");
+  }
+
+  if (status >= 500) {
+    if (errorData?.message && typeof errorData.message === "string") {
+      if (errorData.message.includes("tenant/user") || errorData.message.includes("ENOTFOUND")) {
+        throw new Error("Koneksi database backend sedang tidak aktif atau dijeda. Harap periksa status database server.");
+      }
+      throw new Error(`Server error: ${errorData.message}`);
+    }
+    throw new Error("Server backend sedang mengalami kendala internal (500). Silakan coba lagi nanti.");
+  }
+
+  if (errorData?.data && Array.isArray(errorData.data)) {
+    const messages = errorData.data.map((item: any) => item.message || JSON.stringify(item)).join(", ");
+    throw new Error(messages || defaultMessage);
+  }
+
+  if (errorData?.message) {
+    throw new Error(errorData.message);
+  }
+
+  throw new Error(defaultMessage);
+}
 
 // Login
 export async function login(username: string, password: string) {
-  const response = await fetch(`${BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+  } catch {
+    throw new Error("Tidak dapat terhubung ke server backend. Periksa koneksi internet Anda atau status server.");
+  }
 
-  // ubah jadi json
+  if (!response.ok) {
+    return handleResponseError(response, "Gagal melakukan login. Periksa username dan password Anda.");
+  }
+
   const data = await response.json();
-
   if (data.error) {
-    // Kirim pesan error backend
-    throw new Error(data.message);  
+    throw new Error(data.message || "Gagal masuk.");
   }
 
   return data;
 }
 
 // Register
-export async function register(
-  username: string,
-  password: string
-) {
-  const response = await fetch(`${BASE_URL}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw data;
+export async function register(username: string, password: string) {
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+  } catch {
+    throw new Error("Tidak dapat terhubung ke server backend. Periksa koneksi internet Anda atau status server.");
   }
 
-  return data;
+  if (!response.ok) {
+    return handleResponseError(response, "Pendaftaran akun gagal. Silakan periksa kembali data Anda.");
+  }
+
+  return await response.json();
 }
 
 // Get user profile
 export async function getProfile() {
-  const response = await fetch(`${BASE_URL}/auth/profile`, {
-    method: "GET",
-    headers: getHeaders()
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/profile`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal terhubung ke server profil.");
+  }
+
   if (!response.ok) {
-    throw new Error("Failed to fetch data profile");
+    return handleResponseError(response, "Gagal memuat profil pengguna.");
   }
   return response.json();
 }
 
 export async function searchArticles(query: string) {
-  const response = await fetch(`${BASE_URL}/search`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ query }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/search`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ query }),
+    });
+  } catch {
+    throw new Error("Tidak dapat terhubung ke server pencarian. Pastikan server backend & AI service aktif.");
+  }
+
   if (!response.ok) {
-    const errText = await response.text();
-    console.error("Backend search error:", response.status, errText);
-    throw new Error(`Search failed: ${response.status} ${errText}`);
+    return handleResponseError(response, "Gagal melakukan pencarian artikel.");
   }
   return response.json();
 }
 
 // Get history pencarian
 export async function articleHistory() {
-  const response = await fetch(`${BASE_URL}/search/history`, {
-    method: "GET",
-    headers: getHeaders(),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal mengambil history pencarian");
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/search/history`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal mengambil histori pencarian.");
   }
 
-  return data;
-}
-
-// Get saved article
-export async function getAllSavedArticle() {
-  const response = await fetch(`${BASE_URL}/library/saved-articles`, {
-    method: "GET",
-    headers: getHeaders(),
-  });
-
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.message || "Gagal mengambil data artikel yang disimpan!");
+    return handleResponseError(response, "Gagal mengambil histori pencarian.");
   }
 
-  return data;
+  return response.json();
 }
 
-// Add artikel ke lib
-export async function saveArticle(articleId: number) {
-  const response = await fetch(`${BASE_URL}/library/saved-articles`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ articleId }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal menyimpan artikel!");
+// Hapus history pencarian
+export async function deleteSearchHistory(queryId: number) {
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/search/history/${queryId}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal menghapus riwayat.");
   }
 
-  return data;
-}
-
-// Delete artikel dari lib
-export async function deleteSavedArticle(articleId: number) {
-  const response = await fetch(`${BASE_URL}/library/saved-articles/${articleId}`, {
-    method: "DELETE",
-    headers: getHeaders(),
-  });
-
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.message || "Gagal menghapus artikel!");
+    return handleResponseError(response, "Gagal menghapus histori pencarian.");
   }
 
-  return data;
+  return response.json();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Get Articles
+export async function getArticles() {
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/library`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal mengambil data materi.");
+  }
+
+  if (!response.ok) {
+    return handleResponseError(response, "Gagal mengambil materi tersimpan.");
+  }
+
+  return response.json();
+}
+
+// Save article
+export async function saveArticle(article_id: number) {
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/library/save`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ article_id }),
+    });
+  } catch {
+    throw new Error("Gagal menyimpan artikel.");
+  }
+
+  if (!response.ok) {
+    return handleResponseError(response, "Gagal menyimpan artikel.");
+  }
+
+  return response.json();
+}
+
+// Delete article
+export async function deleteArticle(article_id: number) {
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/library/delete/${article_id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal menghapus artikel.");
+  }
+
+  if (!response.ok) {
+    return handleResponseError(response, "Gagal menghapus materi.");
+  }
+
+  return response.json();
+}
+
+// Summarize
 export async function summarize(data?: any) {
-  const response = await fetch(`${BASE_URL}/summarize`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/summarize`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  } catch {
+    throw new Error("Tidak dapat terhubung ke AI service untuk meringkas. Silakan periksa status AI service.");
+  }
+
   if (!response.ok) {
-    const errText = await response.text();
-    let errMsg = errText;
-    try {
-      const errJson = JSON.parse(errText);
-      if (errJson.message) errMsg = errJson.message;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e) {
-      // Not JSON
-    }
-    console.error("Backend summarize error:", errMsg);
-    throw new Error(errMsg);
+    return handleResponseError(response, "Gagal membuat ringkasan materi.");
   }
   return response.json();
 }
 
 export async function getNotes() {
-  const response = await fetch(`${BASE_URL}/note`, {
-    method: "GET",
-    headers: getHeaders(),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/note`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal mengambil catatan.");
+  }
+
   if (!response.ok) {
-    throw new Error("Failed to fetch notes");
+    return handleResponseError(response, "Gagal memuat catatan.");
   }
   return response.json();
 }
 
 export async function getNoteById(id: number) {
-  const response = await fetch(`${BASE_URL}/note/${id}`, {
-    method: "GET",
-    headers: getHeaders(),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/note/${id}`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal mengambil detail catatan.");
+  }
+
   if (!response.ok) {
-    throw new Error("Failed to fetch note");
+    return handleResponseError(response, "Gagal memuat catatan.");
   }
   return response.json();
 }
 
 export async function addNote(title: string, contents: string) {
-  const response = await fetch(`${BASE_URL}/note/add`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ title, contents }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/note/add`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ title, contents }),
+    });
+  } catch {
+    throw new Error("Gagal terhubung untuk menambah catatan.");
+  }
+
   if (!response.ok) {
-    throw new Error("Failed to add note");
+    return handleResponseError(response, "Gagal menambahkan catatan baru.");
   }
   return response.json();
 }
 
 export async function editNote(id: number, title?: string, contents?: string) {
-  const response = await fetch(`${BASE_URL}/note/edit/${id}`, {
-    method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify({ title, contents }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/note/edit/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ title, contents }),
+    });
+  } catch {
+    throw new Error("Gagal terhubung untuk mengubah catatan.");
+  }
+
   if (!response.ok) {
-    const err = await response.text();
-    console.error("Edit note failed:", err);
-    throw new Error("Failed to edit note");
+    return handleResponseError(response, "Gagal memperbarui catatan.");
   }
   return response.json();
 }
 
 export async function deleteNote(id: number) {
-  const response = await fetch(`${BASE_URL}/note/delete/${id}`, {
-    method: "DELETE",
-    headers: getHeaders(),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}/note/delete/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+  } catch {
+    throw new Error("Gagal terhubung untuk menghapus catatan.");
+  }
+
   if (!response.ok) {
-    throw new Error("Failed to delete note");
+    return handleResponseError(response, "Gagal menghapus catatan.");
   }
   return response.json();
 }
+
+// Aliases for compatibility
+export const getAllSavedArticle = getArticles;
+export const deleteSavedArticle = deleteArticle;

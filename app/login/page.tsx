@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Cookies from "js-cookie";
@@ -22,17 +23,19 @@ export default function LoginPage() {
 
     try {
       const res = await login(username, password);
-      if (res.error) {
-        setError(res.message || "Login failed");
-      } else {
-        Cookies.set("auth_token", res.data.token);
+      if (res?.error) {
+        setError(res.message || "Gagal masuk. Silakan periksa kembali data Anda.");
+      } else if (res?.data?.token) {
+        Cookies.set("auth_token", res.data.token, { expires: 7 });
         router.push("/");
+      } else {
+        setError("Respon server tidak valid.");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("An error occurred during login.");
+        setError("Terjadi kendala saat melakukan login. Silakan coba lagi.");
       }
     } finally {
       setIsLoading(false);
@@ -45,11 +48,17 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
           <div className="p-8">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <img
+              <Image
                 src="/klipin.png"
                 alt="Klipin Logo"
+                width={160}
+                height={80}
+                priority
                 className="w-auto h-20 object-contain"
               />
+              <span className="self-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
+                Demo
+              </span>
             </div>
             <h2 className="text-xl font-semibold text-slate-800 text-center mb-6">
               Selamat Datang
@@ -72,7 +81,7 @@ export default function LoginPage() {
                     <Mail className="h-4 w-4 text-slate-400" />
                   </div>
                   <input
-                    type="username"
+                    type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="username 123"
@@ -94,7 +103,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="��������"
                     className="w-full pl-10 pr-10 py-2.5 bg-[#f1f5f9] rounded-lg border border-transparent focus:bg-white focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/20 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 tracking-wide font-medium"
                     required
                   />

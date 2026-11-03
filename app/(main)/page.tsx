@@ -410,7 +410,6 @@ function ResearchCanvas() {
         }
       }
     } catch (error: any) {
-      console.error(error);
       if (error.message && error.message.includes("401")) {
         setSearchError(
           "Sesi Anda telah berakhir. Mengarahkan ke halaman login...",
@@ -482,7 +481,6 @@ function ResearchCanvas() {
         alert("Gagal menyimpan ke catatan.");
       }
     } catch (err) {
-      console.error(err);
       alert("Terjadi kesalahan saat menyimpan catatan.");
     } finally {
       setIsSavingNote(false);
@@ -631,7 +629,6 @@ function ResearchCanvas() {
                               whileTap={{ scale: 0.9 }}
                               onClick={async (e) => {
                                 e.stopPropagation();
-                                console.log("article:", article);
                                 try {
                                   // save artikel
                                   await saveArticle(article.id);

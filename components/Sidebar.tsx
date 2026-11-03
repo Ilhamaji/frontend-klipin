@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Search, Library, FileText, History, LogOut, Menu, X, Paperclip, Plus, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -66,11 +67,17 @@ export function Sidebar() {
         <div className="w-64 flex flex-col h-full px-4">
           <div className="mb-6 px-2 flex items-center justify-between">
             <div className="flex items-center">
-              <img 
-                src="/klipin.png" 
-                alt="Klipin Logo" 
+              <Image
+                src="/klipin.png"
+                alt="Klipin Logo"
+                width={140}
+                height={70}
+                priority
                 className="h-20 w-auto object-contain"
               />
+              <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
+                Demo
+              </span>
             </div>
             <button className="md:hidden text-slate-400 hover:text-slate-600" onClick={() => setIsOpen(false)}>
               <X className="w-5 h-5" />
