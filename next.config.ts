@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://backend-skripsi.netlify.app/api/:path*", // Proxy to Backend
+        destination: "https://relaxed-pixie-4fc612.netlify.app/api/:path*", // Proxy to Backend
       },
     ];
   },

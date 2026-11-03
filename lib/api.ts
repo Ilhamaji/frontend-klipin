@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://backend-skripsi.netlify.app/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://relaxed-pixie-4fc612.netlify.app/api";
 
 function getHeaders() {
   const token = Cookies.get("auth_token");
