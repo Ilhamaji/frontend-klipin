@@ -711,9 +711,12 @@ function ResearchCanvas() {
               <div
                 className={cn(
                   "col-span-1 lg:col-span-8 flex flex-col lg:h-full lg:min-h-0 mb-6 lg:mb-0",
-                  // inset-x-0 top-0 + bottom-16 so the sheet stops above the
-                  // fixed bottom tab bar instead of covering it.
-                  "max-lg:fixed max-lg:inset-x-0 max-lg:top-0 max-lg:bottom-16 max-lg:z-40 max-lg:mb-0 max-lg:bg-[#f8fafc]",
+                  // Fixed to the viewport (not to <main>, which already has
+                  // pb-16 for the tab bar) so the sheet truly covers the
+                  // screen. z-30 keeps it below the tab bar's z-40 so the user
+                  // can still navigate away; the summary body reserves bottom
+                  // padding so its last lines clear the bar.
+                  "max-lg:fixed max-lg:inset-0 max-lg:z-30 max-lg:mb-0 max-lg:bg-[#f8fafc]",
                   mobileSummaryOpen ? "max-lg:flex" : "max-lg:hidden"
                 )}
               >
@@ -776,7 +779,7 @@ function ResearchCanvas() {
                   <div
                     ref={rightScrollRef}
                     onScroll={handleRightScroll}
-                    className="flex-1 min-h-0 overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700 max-lg:pb-6"
+                    className="flex-1 min-h-0 overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700 max-lg:pb-[calc(4rem+env(safe-area-inset-bottom))]"
                   >
                     {searchError ? (
                       <div className="text-red-500 bg-red-50 p-4 rounded-lg">

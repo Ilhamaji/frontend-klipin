@@ -8,7 +8,6 @@ import {
   FileText,
   History,
   LogOut,
-  Paperclip,
   Plus,
   Archive,
 } from "lucide-react";
