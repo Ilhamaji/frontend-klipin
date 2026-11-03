@@ -531,7 +531,7 @@ function ResearchCanvas() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
-              className="h-full flex flex-col items-center justify-center max-w-3xl mx-auto text-center px-2 pb-8 lg:mt-[-10vh]"
+              className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-4 pb-8 lg:pb-16"
             >
               <div className="w-16 h-16 md:w-20 md:h-20 bg-[#0f766e]/10 rounded-3xl flex items-center justify-center mb-5 md:mb-6">
                 <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-[#0f766e]" />
@@ -579,10 +579,10 @@ function ResearchCanvas() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ staggerChildren: 0.1 }}
-              className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-1 lg:h-full gap-6 pt-4 lg:pt-8 pb-40 lg:pb-32 lg:min-h-0"
+              className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-1 lg:h-full gap-6 xl:gap-8 pt-4 lg:pt-8 pb-40 lg:pb-32 lg:min-h-0"
             >
               {/* Left Column: Related Articles */}
-              <div className="col-span-1 lg:col-span-4 flex flex-col lg:h-full lg:min-h-0 relative">
+              <div className="col-span-1 lg:col-span-4 xl:col-span-3 flex flex-col lg:h-full lg:min-h-0 relative">
                 <div className="flex items-center justify-between pb-3 bg-transparent z-10 shrink-0">
                   <h3 className="text-lg font-semibold text-slate-800">
                     Materi terkait
@@ -710,7 +710,7 @@ function ResearchCanvas() {
                   Desktop: the usual right column, unaffected. */}
               <div
                 className={cn(
-                  "col-span-1 lg:col-span-8 flex flex-col lg:h-full lg:min-h-0 mb-6 lg:mb-0",
+                  "col-span-1 lg:col-span-8 xl:col-span-9 flex flex-col lg:h-full lg:min-h-0 mb-6 lg:mb-0",
                   // Fixed to the viewport (not to <main>, which already has
                   // pb-16 for the tab bar) so the sheet truly covers the
                   // screen. z-30 keeps it below the tab bar's z-40 so the user
@@ -779,7 +779,7 @@ function ResearchCanvas() {
                   <div
                     ref={rightScrollRef}
                     onScroll={handleRightScroll}
-                    className="flex-1 min-h-0 overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700 max-lg:pb-[calc(4rem+env(safe-area-inset-bottom))]"
+                    className="flex-1 min-h-0 overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700 max-lg:pb-[calc(4rem+env(safe-area-inset-bottom))] lg:prose-p:leading-7"
                   >
                     {searchError ? (
                       <div className="text-red-500 bg-red-50 p-4 rounded-lg">

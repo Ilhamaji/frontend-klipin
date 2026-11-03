@@ -46,17 +46,12 @@ export function Sidebar() {
       {/* Desktop sidebar. Hidden below md — phones get the bottom tab bar
           instead, which keeps navigation reachable with a thumb and frees the
           top of the screen for content. */}
-      <aside className="hidden md:flex h-full w-64 shrink-0 flex-col border-r border-slate-100 bg-white py-6 font-sans">
-        {/* Single w-64 with px-4 inside: the previous nested w-64 + px-4 made
-            the inner box 256px wide *plus* 32px of padding, so its children
-            could sit 16px past the sidebar border. */}
-        <div className="flex h-full min-w-0 flex-col px-4">
-          {/* The logo and the badge together are wider than the 224px of
-              usable sidebar width at the sm breakpoint (80px tall logo is
-              ~172px wide, the badge ~48px incl. gap), which pushed the badge
-              past the sidebar edge. Letting the logo shrink keeps both inside
-              instead of forcing the row wider than its container. */}
-          <div className="mb-6 px-2 flex items-center min-w-0 overflow-hidden">
+      <aside className="hidden h-full w-72 shrink-0 flex-col border-r border-slate-200/70 bg-white px-3 py-5 font-sans md:flex">
+        <div className="flex h-full min-w-0 flex-col">
+          {/* The logo and the badge together are wider than the usable
+              sidebar width at the sm breakpoint, which pushed the badge past
+              the edge. Letting the logo shrink keeps both inside. */}
+          <div className="mb-6 flex items-center gap-2 overflow-hidden px-2">
             <Image
               src="/klipin.png"
               alt="Klipin Logo"
@@ -65,24 +60,25 @@ export function Sidebar() {
               priority
               unoptimized
               style={{ width: "auto", height: "auto" }}
-              className="h-16 w-auto min-w-0 object-contain object-left sm:h-20"
+              className="h-14 w-auto min-w-0 object-contain object-left"
             />
-            <span className="ml-2 shrink-0 whitespace-nowrap rounded-full border border-teal-200/60 bg-teal-50 px-1.5 py-0.5 text-[10px] leading-none font-bold uppercase tracking-normal text-teal-700 select-none">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-teal-200/60 bg-teal-50 px-1.5 py-0.5 text-[10px] leading-none font-bold uppercase text-teal-700 select-none">
               Demo
             </span>
           </div>
 
-          <div className="px-2 mb-6">
-            <button
-              onClick={handleNewChat}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f766e] py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#0d645d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e]"
-            >
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
-              Chat Baru
-            </button>
-          </div>
+          <button
+            onClick={handleNewChat}
+            className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f766e] py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0d645d] active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e]"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            Chat Baru
+          </button>
 
-          <nav className="flex flex-1 flex-col gap-1 px-1">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Menu
+          </p>
+          <nav className="flex flex-1 flex-col gap-0.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -93,16 +89,21 @@ export function Sidebar() {
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-[#dcfce7]/60 text-[#0f766e]"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-[#0f766e]/8 text-[#0f766e]"
+                      : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
                   )}
                 >
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[#0f766e]" />
+                  )}
                   <Icon
                     className={cn(
-                      "w-4 h-4",
-                      isActive ? "text-[#0f766e]" : "text-slate-400"
+                      "h-4 w-4 shrink-0",
+                      isActive
+                        ? "text-[#0f766e]"
+                        : "text-slate-400 group-hover:text-slate-600"
                     )}
                   />
                   {item.name}
@@ -111,12 +112,12 @@ export function Sidebar() {
             })}
           </nav>
 
-          <div className="mt-auto flex flex-col gap-1 px-1">
+          <div className="mt-auto border-t border-slate-200/70 pt-3">
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600"
             >
-              <LogOut className="w-4 h-4 text-red-500" />
+              <LogOut className="h-4 w-4 shrink-0 text-slate-400" />
               Keluar
             </button>
           </div>

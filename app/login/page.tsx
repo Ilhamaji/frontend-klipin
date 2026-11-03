@@ -43,11 +43,37 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen-dvh flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20 px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <div className="w-full max-w-[400px]">
+    <div className="min-h-screen-dvh flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20 px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:flex-row lg:gap-16 lg:px-12">
+      {/* Wide screens have plenty of empty space around a 400px card, so the
+          brand panel carries the left side and the form stays narrow and
+          readable on the right. Hidden below lg, where the card is centred
+          exactly as before. */}
+      <div className="hidden lg:flex lg:max-w-md lg:flex-1 lg:flex-col lg:justify-center">
+        <Image
+          src="/klipin.png"
+          alt=""
+          width={579}
+          height={270}
+          priority
+          unoptimized
+          style={{ width: "auto", height: "auto" }}
+          className="mb-8 h-20 w-auto object-contain object-left"
+        />
+        <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+          Teliti lebih cepat,
+          <br />
+          pahami lebih dalam.
+        </h1>
+        <p className="mt-5 text-base leading-relaxed text-slate-500 max-w-sm">
+          Cari artikel akademik, lalu dapatkan ringkasan terstruktur dalam
+          Bahasa Indonesia — lengkap dengan temuan dan daftar pustaka.
+        </p>
+      </div>
+
+      <div className="w-full max-w-[400px] lg:flex-none">
         <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
           <div className="p-5 sm:p-8">
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-4 min-h-[64px]">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-4 min-h-[64px] lg:hidden">
               <Image
                 src="/klipin.png"
                 alt="Klipin Logo"
