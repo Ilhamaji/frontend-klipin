@@ -7,9 +7,12 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    // h-dvh instead of h-screen: on phones 100vh is taller than the visible
+    // area while the URL bar is shown, which pushed the bottom of the app
+    // (including the search bar) out of reach. dvh tracks the real height.
+    <div className="flex h-screen-dvh overflow-hidden bg-white">
       <Sidebar />
-      <main className="flex-1 h-full overflow-hidden relative">
+      <main className="flex-1 min-w-0 h-full min-h-0 overflow-hidden relative flex flex-col">
         <IdleWrapper>
           {children}
         </IdleWrapper>

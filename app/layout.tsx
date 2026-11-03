@@ -52,7 +52,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-on-background font-inter font-[family-name:var(--font-inter)]">
-          {children}
+        {/* The app shell (main layout) manages its own scrolling, so the
+            wrapper just needs to hand it the full height and let it shrink. */}
+        <div className="flex-1 min-h-0 flex flex-col">{children}</div>
       </body>
     </html>
   );

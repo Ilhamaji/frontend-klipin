@@ -492,7 +492,7 @@ function ResearchCanvas() {
   };
 
   return (
-    <div className="h-full flex flex-col relative w-full overflow-hidden bg-[#f8fafc] font-sans">
+    <div className="h-full min-h-0 flex flex-col relative w-full bg-[#f8fafc] font-sans">
       {/* Header
       <header className="flex-none px-8 py-5 flex justify-between items-center z-10">
         <div className="flex items-center gap-4">
@@ -502,11 +502,17 @@ function ResearchCanvas() {
         </div>
       </header> */}
 
-      {/* Main Content Area */}
+      {/* Main Content Area.
+          On phones this is the single scroll container for the whole results
+          view: the summary is a long document, so the *page* has to scroll.
+          Locking it to overflow-hidden here was what made the summary
+          unreachable after a search on mobile. From lg up the two columns are
+          full height and scroll independently, which keeps the desktop layout
+          unchanged. */}
       <div
         className={cn(
-          "flex-1 overflow-x-hidden px-4 md:px-8 relative flex flex-col",
-          hasSearched ? "overflow-hidden" : "overflow-y-auto",
+          "flex-1 min-h-0 overflow-x-hidden px-4 md:px-8 relative flex flex-col",
+          "overflow-y-auto lg:overflow-hidden",
         )}
       >
         <AnimatePresence mode="wait">
@@ -564,7 +570,7 @@ function ResearchCanvas() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ staggerChildren: 0.1 }}
-              className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-1 lg:h-full gap-6 pt-4 lg:pt-8 pb-36 lg:pb-32 min-h-0"
+              className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-1 lg:h-full gap-6 pt-4 lg:pt-8 pb-40 lg:pb-32 lg:min-h-0"
             >
               {/* Left Column: Related Articles */}
               <div className="col-span-1 lg:col-span-4 flex flex-col lg:h-full lg:min-h-0 relative">
@@ -574,10 +580,13 @@ function ResearchCanvas() {
                   </h3>
                 </div>
 
+                {/* Mobile: a plain 2-column grid that grows with its content, so
+                    the whole page scrolls as one. Desktop: a fixed-height
+                    column that scrolls on its own. */}
                 <div
                   ref={leftScrollRef}
                   onScroll={handleLeftScroll}
-                  className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 lg:flex lg:flex-col gap-3 sm:gap-4 pb-8 lg:pb-4 no-scrollbar"
+                  className="lg:flex-1 lg:min-h-0 overflow-y-auto lg:pr-2 grid grid-cols-2 lg:flex lg:flex-col gap-3 sm:gap-4 pb-2 lg:pb-4 no-scrollbar"
                 >
                   {searchError ? (
                     <div className="col-span-2 bg-red-50 border border-red-100 rounded-xl p-5 text-red-600 text-sm shadow-sm flex items-start gap-3">
@@ -671,8 +680,8 @@ function ResearchCanvas() {
                     ))
                   )}
                 </div>
-                {/* Scroll Progress Bar */}
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 rounded-full overflow-hidden shrink-0 z-20">
+                {/* Scroll Progress Bar — desktop only, see note above. */}
+                <div className="hidden lg:block absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 rounded-full overflow-hidden shrink-0 z-20">
                   <div
                     className="h-full bg-[#0f766e] transition-all duration-75"
                     style={{ width: `${leftProgress}%` }}
@@ -682,7 +691,7 @@ function ResearchCanvas() {
 
               {/* Right Column: AI Summary */}
               <div className="col-span-1 lg:col-span-8 flex flex-col lg:h-full lg:min-h-0 mb-6 lg:mb-0">
-                <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-6 lg:p-8 min-h-[350px] lg:min-h-0 lg:h-full flex flex-col relative overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-6 lg:p-8 lg:min-h-0 lg:h-full flex flex-col relative overflow-hidden">
                   <div className="flex items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100 shrink-0">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 sm:w-11 sm:h-11 bg-[#e6f2f1] rounded-full flex items-center justify-center shrink-0">
@@ -729,7 +738,7 @@ function ResearchCanvas() {
                   <div
                     ref={rightScrollRef}
                     onScroll={handleRightScroll}
-                    className="flex-1 overflow-y-auto pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700"
+                    className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700"
                   >
                     {searchError ? (
                       <div className="text-red-500 bg-red-50 p-4 rounded-lg">
@@ -813,8 +822,10 @@ function ResearchCanvas() {
                       </div>
                     )}
                   </div>
-                  {/* Scroll Progress Bar */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 rounded-full overflow-hidden shrink-0 z-20">
+                  {/* Scroll Progress Bar — desktop only. On phones the card has
+                      no inner scrollbar (the page scrolls), so the bar would
+                      report nothing and sit on top of the last lines. */}
+                  <div className="hidden lg:block absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 rounded-full overflow-hidden shrink-0 z-20">
                     <div
                       className="h-full bg-[#0f766e] transition-all duration-75"
                       style={{ width: `${rightProgress}%` }}
@@ -827,9 +838,11 @@ function ResearchCanvas() {
         </AnimatePresence>
       </div>
 
-      {/* Sticky Search Bar Bottom */}
+      {/* Sticky Search Bar Bottom. pb-safe keeps it clear of the home
+          indicator; the results grid reserves pb-40 so the last lines of a
+          long summary are never hidden behind this bar. */}
       {hasSearched && (
-        <div className="absolute left-0 right-0 p-4 md:p-8 bottom-0 z-20 transition-all duration-500 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/90 to-transparent pt-12 pointer-events-none">
+        <div className="absolute left-0 right-0 p-4 md:p-8 pb-safe bottom-0 z-20 transition-all duration-500 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/90 to-transparent pt-12 pointer-events-none">
           <div className="pointer-events-auto max-w-4xl mx-auto">
             <form onSubmit={handleSearch} className="relative group">
               <div className="relative bg-white shadow-lg shadow-slate-200/50 rounded-full border border-slate-100 overflow-hidden flex items-center pr-2 pl-4 focus-within:border-[#0f766e]/30 focus-within:ring-4 focus-within:ring-[#0f766e]/10 transition-all h-14">

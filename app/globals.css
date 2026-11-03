@@ -332,6 +332,32 @@ button:disabled,
   min-height: 100dvh;
 }
 
+/* Same idea for the app shell: it should be exactly as tall as the visible
+   viewport so the inner scroll containers work and nothing is clipped.
+   The vh value is declared in a separate rule on purpose: Tailwind's minifier
+   collapses duplicate declarations in one block and would drop the fallback,
+   leaving browsers without dvh support (iOS < 15.4) with no height at all. */
+.h-screen-dvh {
+  height: 100vh;
+}
+
+@supports (height: 100dvh) {
+  .h-screen-dvh {
+    height: 100dvh;
+  }
+}
+
+/* Momentum scrolling inside the panel scroll areas on iOS. */
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Respect the notch / home indicator at the bottom of the results view so the
+   sticky search bar is never covered. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Guard against a single wide child (long URL, unbreakable string) forcing
    a horizontal scrollbar on phones. */
 html,
