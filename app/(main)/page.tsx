@@ -20,7 +20,7 @@ import {
   ChevronDown,
   ExternalLink,
 } from "lucide-react";
-import { searchArticles, summarize, addNote, getProfile, saveArticle } from "@/lib/api";
+import { searchArticles, summarize, addNote, getProfile, saveArticle, warmUpAi } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Cookies from "js-cookie";
@@ -201,6 +201,10 @@ function ResearchCanvas() {
     getProfile()
       .then((res) => setUsername(res.data.username))
       .catch(() => setUsername(""));
+
+    // Wake the AI service while the user is reading, so pressing "Ringkas"
+    // does not hit a cold start.
+    warmUpAi();
   }, []);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [summaryData, setSummaryData] = useState<{

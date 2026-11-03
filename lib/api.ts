@@ -10,6 +10,40 @@ function getHeaders() {
   };
 }
 
+/**
+ * Warm up the AI service.
+ *
+ * The AI Space sleeps when idle, and the first request after that has to wait
+ * for the container to boot — longer than the backend request budget allows.
+ * Calling this when the page mounts means the Space is already awake by the
+ * time the user finishes reading and presses "Ringkas". This is driven by real
+ * user activity, not a background pinger.
+ *
+ * Fire-and-forget: never throws and never blocks rendering.
+ */
+let warmupPromise: Promise<boolean> | null = null;
+
+export function warmUpAi(): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+  if (warmupPromise) return warmupPromise;
+
+  warmupPromise = fetch(`${BASE_URL}/ai/ready`, { method: "GET" })
+    .then(async (response) => {
+      if (!response.ok) return false;
+      const data = await response.json().catch(() => null);
+      return Boolean(data?.ready);
+    })
+    .catch(() => false)
+    .finally(() => {
+      // Allow a later call to re-probe once this one settles.
+      setTimeout(() => {
+        warmupPromise = null;
+      }, 60_000);
+    });
+
+  return warmupPromise;
+}
+
 async function handleResponseError(response: Response, defaultMessage: string): Promise<never> {
   const status = response.status;
   let errorData: any = null;
@@ -256,6 +290,17 @@ export async function summarize(data?: any) {
   }
 
   if (!response.ok) {
+    // 503 AI_WARMING_UP: the Space is still booting. Show the server's
+    // friendly message instead of a generic failure.
+    if (response.status === 503) {
+      const payload = await response.json().catch(() => null);
+      if (payload?.code === "AI_WARMING_UP") {
+        throw new Error(
+          payload.message ||
+            "Layanan AI sedang disiapkan. Silakan coba lagi dalam 30 detik.",
+        );
+      }
+    }
     return handleResponseError(response, "Gagal membuat ringkasan materi.");
   }
   return response.json();
