@@ -186,7 +186,7 @@ export default function NotesPage() {
           activeNote ? "hidden md:flex" : "flex",
         )}
       >
-        <div className="p-6 pl-16 md:pl-6 border-b border-outline-variant/20 flex justify-between items-center">
+        <div className="p-6 border-b border-outline-variant/20 flex justify-between items-center">
           <h2 className="typography-headline-sm text-on-surface">Catatan</h2>
           <button
             onClick={handleNewNote}
@@ -330,7 +330,7 @@ export default function NotesPage() {
             </div>
 
             {/* Editor Body */}
-            <div className="flex-1 overflow-y-auto p-12 max-w-4xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto p-4 pb-24 sm:p-8 md:p-12 md:pb-12 max-w-4xl mx-auto w-full">
               {isEditing ? (
                 <div className="flex flex-col h-full gap-6">
                   <input

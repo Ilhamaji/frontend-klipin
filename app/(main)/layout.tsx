@@ -8,14 +8,14 @@ export default function MainLayout({
 }) {
   return (
     // h-dvh instead of h-screen: on phones 100vh is taller than the visible
-    // area while the URL bar is shown, which pushed the bottom of the app
-    // (including the search bar) out of reach. dvh tracks the real height.
+    // area while the URL bar is shown, which pushed the bottom of the app out
+    // of reach. dvh tracks the real height.
     <div className="flex h-screen-dvh overflow-hidden bg-white">
       <Sidebar />
-      <main className="flex-1 min-w-0 h-full min-h-0 overflow-hidden relative flex flex-col">
-        <IdleWrapper>
-          {children}
-        </IdleWrapper>
+      {/* pb-16 reserves the height of the fixed bottom tab bar on phones so no
+          content is trapped underneath it. From md up the bar is gone. */}
+      <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-16 md:pb-0">
+        <IdleWrapper>{children}</IdleWrapper>
       </main>
     </div>
   );

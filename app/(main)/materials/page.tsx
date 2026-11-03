@@ -55,7 +55,7 @@ export default function LibraryPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 pt-16 md:p-8 relative">
+    <div className="flex-1 overflow-y-auto p-4 pb-24 md:p-8 md:pb-8 relative">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="cursor-default">

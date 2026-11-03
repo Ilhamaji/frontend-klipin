@@ -215,6 +215,10 @@ function ResearchCanvas() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSavingNote, setIsSavingNote] = useState(false);
 
+  // Mobile-only: the summary opens as a full screen view instead of a second
+  // column. On desktop both columns are always visible, so this is ignored.
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+
   const currentArticle = searchData?.articles?.find(
     (a) => a.url === summaryData?.url
   );
@@ -365,6 +369,8 @@ function ResearchCanvas() {
     setSearchData(null);
     setSummaryData(null);
     setSearchError(null);
+    // A new search returns to the list, so close the mobile summary sheet.
+    setMobileSummaryOpen(false);
 
     try {
       const data = await searchArticles(searchQuery);
@@ -433,6 +439,9 @@ function ResearchCanvas() {
   const handleSummarize = async (article: Article) => {
     setIsSummarizing(true);
     setSummaryData(null);
+    // On phones this reveals the full screen summary immediately, so the user
+    // sees the loading state instead of staying on the list.
+    setMobileSummaryOpen(true);
     try {
       const sumData = await summarize({ url: article.url });
       setSummaryData(sumData);
@@ -522,15 +531,15 @@ function ResearchCanvas() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
-              className="h-full flex flex-col items-center justify-center max-w-3xl mx-auto text-center mt-[-10vh]"
+              className="h-full flex flex-col items-center justify-center max-w-3xl mx-auto text-center px-2 pb-8 lg:mt-[-10vh]"
             >
-              <div className="w-20 h-20 bg-[#0f766e]/10 rounded-3xl flex items-center justify-center mb-6">
-                <Sparkles className="w-10 h-10 text-[#0f766e]" />
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-[#0f766e]/10 rounded-3xl flex items-center justify-center mb-5 md:mb-6">
+                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-[#0f766e]" />
               </div>
-              <h1 className="text-3xl md:text-4xl text-slate-800 mb-4 font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl text-slate-800 mb-3 md:mb-4 font-bold tracking-tight px-1">
                 {greeting} {username || "User"}!
               </h1>
-              <p className="text-base md:text-lg text-slate-500 mb-10 max-w-2xl leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg text-slate-500 mb-7 md:mb-10 max-w-2xl leading-relaxed px-1">
                 Masukan kata kunci pembelajaran yang ingin dicari dan AI akan
                 membantu mengklasifikasikan hasil berdasarkan jenjang dan mata
                 pelajarannya.
@@ -578,15 +587,18 @@ function ResearchCanvas() {
                   <h3 className="text-lg font-semibold text-slate-800">
                     Materi terkait
                   </h3>
+                  <span className="text-xs text-slate-400 lg:hidden">
+                    Ketuk untuk meringkas
+                  </span>
                 </div>
 
-                {/* Mobile: a plain 2-column grid that grows with its content, so
-                    the whole page scrolls as one. Desktop: a fixed-height
-                    column that scrolls on its own. */}
+                {/* Phone: one full width column, so titles and abstracts are
+                    readable instead of squeezed into 2 narrow tiles. Desktop:
+                    a fixed-height column that scrolls on its own. */}
                 <div
                   ref={leftScrollRef}
                   onScroll={handleLeftScroll}
-                  className="lg:flex-1 lg:min-h-0 overflow-y-auto lg:pr-2 grid grid-cols-2 lg:flex lg:flex-col gap-3 sm:gap-4 pb-2 lg:pb-4 no-scrollbar"
+                  className="lg:flex-1 lg:min-h-0 overflow-y-auto lg:pr-2 grid grid-cols-1 lg:flex lg:flex-col gap-3 sm:gap-4 pb-2 lg:pb-4 no-scrollbar"
                 >
                   {searchError ? (
                     <div className="col-span-2 bg-red-50 border border-red-100 rounded-xl p-5 text-red-600 text-sm shadow-sm flex items-start gap-3">
@@ -610,12 +622,12 @@ function ResearchCanvas() {
                   ) : (
                     searchData?.articles.map((article, idx) => (
                       <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: Math.min(idx, 5) * 0.05 }}
                         key={idx}
                         onClick={() => handleSummarize(article)}
-                        className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer hover:border-[#0f766e]/30"
+                        className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer hover:border-[#0f766e]/30 active:scale-[0.99]"
                       >
                         <div className="flex gap-2 mb-3">
                           <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs font-medium rounded-md flex items-center gap-1">
@@ -655,8 +667,9 @@ function ResearchCanvas() {
                                   );
                                 }
                               }}
-                              className="p-1.5 text-slate-400 hover:text-[#0f766e] transition-colors"
+                              className="grid h-9 w-9 sm:h-auto sm:w-auto sm:p-1.5 place-items-center text-slate-400 hover:text-[#0f766e] transition-colors"
                               title="Save to Library"
+                              aria-label="Simpan ke library"
                             >
                               <BookmarkPlus className="w-4 h-4" />
                             </motion.button>
@@ -668,8 +681,9 @@ function ResearchCanvas() {
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="p-1.5 text-[#0f766e] hover:text-[#0d645d] transition-colors"
+                                className="grid h-9 w-9 sm:h-auto sm:w-auto sm:p-1.5 place-items-center text-[#0f766e] hover:text-[#0d645d] transition-colors"
                                 title="Read Original"
+                                aria-label="Buka dokumen asli"
                               >
                                 <ArrowRight className="w-4 h-4" />
                               </motion.a>
@@ -689,27 +703,51 @@ function ResearchCanvas() {
                 </div>
               </div>
 
-              {/* Right Column: AI Summary */}
-              <div className="col-span-1 lg:col-span-8 flex flex-col lg:h-full lg:min-h-0 mb-6 lg:mb-0">
-                <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-6 lg:p-8 lg:min-h-0 lg:h-full flex flex-col relative overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100 shrink-0">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 sm:w-11 sm:h-11 bg-[#e6f2f1] rounded-full flex items-center justify-center shrink-0">
+              {/* Right Column: AI Summary.
+                  Phone: a full screen sheet that replaces the list once an
+                  article is tapped, so the summary gets the whole viewport
+                  instead of sharing it with a second column that cannot fit.
+                  Desktop: the usual right column, unaffected. */}
+              <div
+                className={cn(
+                  "col-span-1 lg:col-span-8 flex flex-col lg:h-full lg:min-h-0 mb-6 lg:mb-0",
+                  // inset-x-0 top-0 + bottom-16 so the sheet stops above the
+                  // fixed bottom tab bar instead of covering it.
+                  "max-lg:fixed max-lg:inset-x-0 max-lg:top-0 max-lg:bottom-16 max-lg:z-40 max-lg:mb-0 max-lg:bg-[#f8fafc]",
+                  mobileSummaryOpen ? "max-lg:flex" : "max-lg:hidden"
+                )}
+              >
+                <div className="bg-white lg:rounded-2xl lg:shadow-md lg:border lg:border-slate-200 p-4 sm:p-6 lg:p-8 lg:min-h-0 lg:h-full flex flex-col relative overflow-hidden max-lg:flex-1 max-lg:min-h-0">
+                  <div className="flex items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100 shrink-0 max-lg:pt-[env(safe-area-inset-top)]">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <button
+                        onClick={() => setMobileSummaryOpen(false)}
+                        aria-label="Kembali ke daftar materi"
+                        className="lg:hidden -ml-1 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 active:bg-slate-200"
+                      >
+                        <ChevronDown className="w-5 h-5 rotate-90" />
+                      </button>
+                      <div className="w-9 h-9 sm:w-11 sm:h-11 bg-[#e6f2f1] rounded-full items-center justify-center shrink-0 hidden sm:flex">
                         <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-[#0f766e]" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-sm sm:text-base font-semibold text-slate-800 leading-tight">
-                          Ringkasan Materi
+                        <h3 className="text-sm sm:text-base font-semibold text-slate-800 leading-tight truncate">
+                          {currentArticle?.title || "Ringkasan Materi"}
                         </h3>
                         <p className="text-[11px] sm:text-xs text-slate-500 truncate">
-                          Hasil ringkasan materi
+                          {currentArticle
+                            ? [currentArticle.jenjang, currentArticle.subject]
+                                .filter(Boolean)
+                                .join(" · ")
+                            : "Hasil ringkasan materi"}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                       <button
                         onClick={handleCopySummary}
-                        className="p-1.5 sm:p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
+                        aria-label="Salin ringkasan"
+                        className="grid h-11 w-11 sm:h-auto sm:w-auto sm:p-2 place-items-center text-slate-500 hover:bg-slate-50 rounded-lg transition-colors sm:flex sm:items-center sm:gap-1.5"
                         title="Salin"
                       >
                         <Copy className="w-4 h-4" />
@@ -738,7 +776,7 @@ function ResearchCanvas() {
                   <div
                     ref={rightScrollRef}
                     onScroll={handleRightScroll}
-                    className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700"
+                    className="flex-1 min-h-0 overflow-y-auto lg:pr-1 no-scrollbar prose prose-slate max-w-none font-sans text-slate-700 max-lg:pb-6"
                   >
                     {searchError ? (
                       <div className="text-red-500 bg-red-50 p-4 rounded-lg">
@@ -822,10 +860,10 @@ function ResearchCanvas() {
                       </div>
                     )}
                   </div>
-                  {/* Scroll Progress Bar — desktop only. On phones the card has
-                      no inner scrollbar (the page scrolls), so the bar would
-                      report nothing and sit on top of the last lines. */}
-                  <div className="hidden lg:block absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 rounded-full overflow-hidden shrink-0 z-20">
+                  {/* Scroll progress for the summary body. Useful again on
+                      phones now that the summary scrolls inside a full screen
+                      sheet. */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/50 overflow-hidden shrink-0 z-20">
                     <div
                       className="h-full bg-[#0f766e] transition-all duration-75"
                       style={{ width: `${rightProgress}%` }}
@@ -838,11 +876,17 @@ function ResearchCanvas() {
         </AnimatePresence>
       </div>
 
-      {/* Sticky Search Bar Bottom. pb-safe keeps it clear of the home
-          indicator; the results grid reserves pb-40 so the last lines of a
-          long summary are never hidden behind this bar. */}
+      {/* Sticky Search Bar Bottom. Hidden on phones while the summary sheet is
+          open (the sheet is a full screen overlay with its own actions); on
+          desktop it stays, because there the summary is just the right
+          column. pb-safe keeps it clear of the home indicator. */}
       {hasSearched && (
-        <div className="absolute left-0 right-0 p-4 md:p-8 pb-safe bottom-0 z-20 transition-all duration-500 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/90 to-transparent pt-12 pointer-events-none">
+        <div
+          className={cn(
+            "absolute left-0 right-0 p-4 md:p-8 pb-safe bottom-0 z-20 transition-all duration-500 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/90 to-transparent pt-12 pointer-events-none",
+            mobileSummaryOpen && "max-lg:hidden"
+          )}
+        >
           <div className="pointer-events-auto max-w-4xl mx-auto">
             <form onSubmit={handleSearch} className="relative group">
               <div className="relative bg-white shadow-lg shadow-slate-200/50 rounded-full border border-slate-100 overflow-hidden flex items-center pr-2 pl-4 focus-within:border-[#0f766e]/30 focus-within:ring-4 focus-within:ring-[#0f766e]/10 transition-all h-14">
