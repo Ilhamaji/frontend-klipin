@@ -767,7 +767,7 @@ function ResearchCanvas() {
                           return (
                             <div className="border-b border-slate-100 pb-4 mb-2">
                               {title && (
-                                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug mb-3">
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug mb-3 break-anywhere">
                                   {title}
                                 </h2>
                               )}
