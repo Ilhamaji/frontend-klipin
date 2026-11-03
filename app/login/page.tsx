@@ -43,19 +43,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20">
-      <div className="w-full max-w-[400px] px-4">
+    <div className="min-h-screen-dvh flex flex-col items-center justify-center bg-[#f8fafc] font-sans selection:bg-[#0f766e]/20 px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="w-full max-w-[400px]">
         <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
-          <div className="p-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="p-5 sm:p-8">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-4 min-h-[64px]">
               <Image
                 src="/klipin.png"
                 alt="Klipin Logo"
-                width={160}
-                height={80}
+                width={579}
+                height={270}
                 priority
                 unoptimized
-                className="w-auto h-20 object-contain"
+                // Fixed aspect ratio prevents the logo collapsing when the
+                // flex row is narrow (small phones). object-contain keeps it
+                // undistorted on every breakpoint.
+                style={{ width: "auto", height: "auto" }}
+                className="h-14 w-auto max-w-[60%] object-contain sm:h-20 sm:max-w-none"
               />
               <span className="self-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
                 Demo
@@ -86,7 +90,10 @@ export default function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="username 123"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#f1f5f9] rounded-lg border border-transparent focus:bg-white focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/20 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="username"
+                    className="w-full pl-10 pr-4 py-3 text-base sm:text-sm bg-[#f1f5f9] rounded-lg border border-transparent focus:bg-white focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/20 text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200"
                     required
                   />
                 </div>
@@ -105,13 +112,15 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 bg-[#f1f5f9] rounded-lg border border-transparent focus:bg-white focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/20 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 tracking-wide font-medium"
+                    autoComplete="current-password"
+                    className="w-full pl-10 pr-12 py-3 text-base sm:text-sm bg-[#f1f5f9] rounded-lg border border-transparent focus:bg-white focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/20 text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 tracking-wide font-medium"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    className="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-slate-400 hover:text-slate-600 focus:outline-none"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -126,7 +135,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-2.5 px-4 bg-[#0f766e] hover:bg-[#0d645d] text-white rounded-lg font-medium text-sm transition-all active:scale-[0.98] flex justify-center items-center gap-2 disabled:opacity-70 disabled:active:scale-100"
+                  className="w-full min-h-[44px] py-3 px-4 bg-[#0f766e] hover:bg-[#0d645d] text-white rounded-lg font-medium text-sm transition-all active:scale-[0.98] flex justify-center items-center gap-2 disabled:opacity-70 disabled:active:scale-100"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">

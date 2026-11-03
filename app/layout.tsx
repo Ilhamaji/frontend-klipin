@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Hanken_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,16 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
+
+// Explicit mobile viewport: without width=device-width phones render at a
+// wide virtual viewport and scale everything down, which made the auth pages
+// look tiny and shifted the logo out of view.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0f766e",
+};
 
 export const metadata: Metadata = {
   title: "Klipin (Demo) - The Research System",

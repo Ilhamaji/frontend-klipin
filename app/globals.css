@@ -322,3 +322,29 @@ button:disabled,
   scrollbar-width: none;  /* Firefox */
 }
 
+/* ── Mobile viewport helpers ──────────────────────────────────────────
+   Mobile browsers resize the viewport when the URL bar shows/hides, which
+   makes `min-h-screen` (100vh) jump and can clip centred auth forms.
+   `dvh` tracks the real visible height; vh stays as the fallback for older
+   engines that do not understand dvh. */
+.min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Guard against a single wide child (long URL, unbreakable string) forcing
+   a horizontal scrollbar on phones. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Long titles/URLs inside summary and article cards must wrap instead of
+   overflowing the card on narrow screens. */
+.break-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+

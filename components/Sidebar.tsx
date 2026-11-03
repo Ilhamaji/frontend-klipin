@@ -66,17 +66,20 @@ export function Sidebar() {
       >
         <div className="w-64 flex flex-col h-full px-4">
           <div className="mb-6 px-2 flex items-center justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <Image
                 src="/klipin.png"
                 alt="Klipin Logo"
-                width={140}
-                height={70}
+                width={579}
+                height={270}
                 priority
                 unoptimized
-                className="h-20 w-auto object-contain"
+                // shrink-0 + explicit aspect ratio keep the logo visible when
+                // the sidebar row is tight on small screens.
+                style={{ width: "auto", height: "auto" }}
+                className="h-16 w-auto shrink-0 object-contain sm:h-20"
               />
-              <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
+              <span className="ml-2 shrink-0 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
                 Demo
               </span>
             </div>
