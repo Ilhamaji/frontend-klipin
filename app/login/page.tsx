@@ -54,6 +54,7 @@ export default function LoginPage() {
                 width={160}
                 height={80}
                 priority
+                unoptimized
                 className="w-auto h-20 object-contain"
               />
               <span className="self-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">

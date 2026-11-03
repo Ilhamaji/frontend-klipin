@@ -73,6 +73,7 @@ export function Sidebar() {
                 width={140}
                 height={70}
                 priority
+                unoptimized
                 className="h-20 w-auto object-contain"
               />
               <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200/60 rounded-full select-none">
